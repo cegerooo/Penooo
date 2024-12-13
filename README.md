@@ -159,6 +159,533 @@ cd cheatsheet-pentesting
   tcpdump -i <interface> port 80
   ```
 
+### GMSAPasswordReader
+- **Retrieve gMSA Password**:
+  ```powershell
+  GMSAPasswordReader.exe <gMSA-Name>
+  ```
+
+---
+
+### GetSPN
+- **List SPNs for a Domain**:
+  ```powershell
+  GetSPN -Domain <domain> -Username <username>
+  ```
+
+- **Export SPNs to File**:
+  ```powershell
+  GetSPN -Domain <domain> -Username <username> > spns.txt
+  ```
+
+---
+
+### PowerUp
+- **Check Privilege Escalation Opportunities**:
+  ```powershell
+  Import-Module .\PowerUp.ps1
+  Invoke-AllChecks
+  ```
+
+---
+
+### Powerview
+- **List Domain Admins**:
+  ```powershell
+  Get-DomainAdmin
+  ```
+
+- **Enumerate All Group Memberships**:
+  ```powershell
+  Get-DomainGroupMember -GroupName "Domain Admins"
+  ```
+
+- **Find Local Admins on Target Machine**:
+  ```powershell
+  Get-NetLocalGroupMember -Group "Administrators" -Computer <target-computer>
+  ```
+
+---
+
+### PrivescCheck
+- **Run Privilege Escalation Checks**:
+  ```powershell
+  .\PrivescCheck.ps1
+  ```
+
+---
+
+### SharpGPOAbuse
+- **Dump Group Policy Objects**:
+  ```powershell
+  SharpGPOAbuse.exe -domain <domain> -user <username> -password <password>
+  ```
+
+- **Check for GPO Misconfigurations**:
+  ```powershell
+  SharpGPOAbuse.exe -gpo <gpo-name> -check
+  ```
+
+---
+
+### accesschk
+- **Check User Permissions on a File**:
+  ```bash
+  accesschk.exe -u <username> <file-path>
+  ```
+
+- **Check Permissions on Registry Key**:
+  ```bash
+  accesschk.exe -k <registry-key-path>
+  ```
+
+---
+
+### apt
+- **Scan for Open Ports**:
+  ```bash
+  apt -s -p <ip-range>
+  ```
+
+- **Perform OS Detection**:
+  ```bash
+  apt -s -O <ip-address>
+  ```
+
+---
+
+### arp
+- **Display ARP Table**:
+  ```bash
+  arp -a
+  ```
+
+- **Add Static ARP Entry**:
+  ```bash
+  arp -s <ip-address> <mac-address>
+  ```
+
+---
+
+### awk
+- **Print Column from File**:
+  ```bash
+  awk '{print $1}' <file>
+  ```
+
+- **Search for a Pattern in File**:
+  ```bash
+  awk '/pattern/' <file>
+  ```
+
+---
+
+### bc
+- **Basic Arithmetic**:
+  ```bash
+  echo "3 + 4" | bc
+  ```
+
+- **Square Root Calculation**:
+  ```bash
+  echo "sqrt(16)" | bc
+  ```
+
+---
+
+### bettercap
+- **Start Sniffing on Interface**:
+  ```bash
+  bettercap -iface <interface> -caplet http-server
+  ```
+
+- **Enable HTTP Proxy**:
+  ```bash
+  bettercap -iface <interface> -proxy
+  ```
+
+---
+
+### bloodHound
+- **Import Data into BloodHound**:
+  ```bash
+  BloodHound -c <config-file> -i <input-file>
+  ```
+
+- **Run BloodHound Enumeration**:
+  ```bash
+  BloodHound -c <config-file> -u <username> -p <password>
+  ```
+
+---
+
+### cadaver
+- **Connect to WebDAV Server**:
+  ```bash
+  cadaver <url>
+  ```
+
+- **List Files in Directory**:
+  ```bash
+  ls
+  ```
+
+---
+
+### cat
+- **View File Content**:
+  ```bash
+  cat <file-path>
+  ```
+
+- **Concatenate Multiple Files**:
+  ```bash
+  cat <file1> <file2>
+  ```
+
+---
+
+### certutil
+- **Check Certificate Information**:
+  ```bash
+  certutil -dump <certificate-file>
+  ```
+
+- **Export Certificate**:
+  ```bash
+  certutil -exportPFX -user <certificate-name> <output-file>
+  ```
+
+---
+
+### cewl
+- **Create Custom Wordlist from URL**:
+  ```bash
+  cewl <url> -w <output-file>
+  ```
+
+- **Create Wordlist from Specific Lengths**:
+  ```bash
+  cewl <url> -w <output-file> -l <min-length> -l <max-length>
+  ```
+
+---
+
+### chisel
+- **Start a Local HTTP Proxy**:
+  ```bash
+  chisel server -p <port> --reverse
+  ```
+
+- **Connect to Remote HTTP Proxy**:
+  ```bash
+  chisel client <remote-server>:<remote-port> <local-port>:http
+  ```
+
+---
+
+### cmd
+- **Open Command Prompt**:
+  ```bash
+  cmd
+  ```
+
+- **Run Command in Command Prompt**:
+  ```bash
+  cmd /c <command>
+  ```
+
+---
+
+### comm
+- **Compare Two Files**:
+  ```bash
+  comm <file1> <file2>
+  ```
+
+- **Suppress Column from Output**:
+  ```bash
+  comm -23 <file1> <file2>
+  ```
+
+---
+
+### crackmapexec
+- **Enumerate SMB Shares**:
+  ```bash
+  crackmapexec smb <target-ip> -u <username> -p <password> --shares
+  ```
+
+- **Run Commands on Target Machines**:
+  ```bash
+  crackmapexec smb <target-ip> -u <username> -p <password> -x "<command>"
+  ```
+
+### crowbar
+- **Brute Force SMB Login**:
+  ```bash
+  crowbar smb -b <ip-address> -u <username> -p <password-list>
+  ```
+
+- **Brute Force SSH Login**:
+  ```bash
+  crowbar ssh -b <ip-address> -u <username> -p <password-list>
+  ```
+
+---
+
+### crunch
+- **Generate Wordlist of Given Lengths**:
+  ```bash
+  crunch <min-length> <max-length> -o <output-file>
+  ```
+
+- **Generate Wordlist with Custom Characters**:
+  ```bash
+  crunch <min-length> <max-length> -o <output-file> -p <charset>
+  ```
+
+---
+
+### curl
+- **Make a GET Request**:
+  ```bash
+  curl http://<url>
+  ```
+
+- **Download a File**:
+  ```bash
+  curl -O <url>
+  ```
+
+- **Send POST Request with Data**:
+  ```bash
+  curl -X POST -d "username=<username>&password=<password>" http://<url>
+  ```
+
+---
+
+### cut
+- **Cut Specific Field from Text**:
+  ```bash
+  cut -d '<delimiter>' -f <field-number> <file>
+  ```
+
+- **Cut from Character Range**:
+  ```bash
+  cut -c <range> <file>
+  ```
+
+---
+
+### debugfs
+- **View Files in Ext2/Ext3 Filesystem**:
+  ```bash
+  debugfs <device>
+  ```
+
+- **Dump File Contents**:
+  ```bash
+  debugfs -R 'cat <file-path>' <device>
+  ```
+
+---
+
+### diff
+- **Compare Two Files**:
+  ```bash
+  diff <file1> <file2>
+  ```
+
+- **Show Side-by-Side Difference**:
+  ```bash
+  diff -y <file1> <file2>
+  ```
+
+---
+
+### dig
+- **Query DNS for a Domain**:
+  ```bash
+  dig <domain>
+  ```
+
+- **Query DNS for a Specific Record Type**:
+  ```bash
+  dig <domain> <record-type>
+  ```
+
+---
+
+### dir
+- **List Files in Directory**:
+  ```bash
+  dir <directory-path>
+  ```
+
+- **List All Files with Details**:
+  ```bash
+  dir /s <directory-path>
+  ```
+
+---
+
+### dirb
+- **Directory Bruteforce Scan**:
+  ```bash
+  dirb http://<url> <wordlist>
+  ```
+
+- **Set Proxy for Directory Scan**:
+  ```bash
+  dirb http://<url> <wordlist> -p <proxy>
+  ```
+
+---
+
+### dnsrecon
+- **Perform DNS Enumeration**:
+  ```bash
+  dnsrecon -d <domain>
+  ```
+
+- **Perform Reverse DNS Lookup**:
+  ```bash
+  dnsrecon -r <ip-range>
+  ```
+
+---
+
+### docker
+- **List Running Containers**:
+  ```bash
+  docker ps
+  ```
+
+- **Run a Container**:
+  ```bash
+  docker run -it <image-name>
+  ```
+
+- **Build Docker Image from Dockerfile**:
+  ```bash
+  docker build -t <image-name> .
+  ```
+
+---
+
+### empsave.dat
+- **Extract Passwords from empsave.dat**:
+  ```bash
+  python3 empsave.py empsave.dat
+  ```
+
+---
+
+### evil-winrm
+- **Start Evil-WinRM Session**:
+  ```bash
+  evil-winrm -i <target-ip> -u <username> -p <password>
+  ```
+
+- **Execute Command on Target Machine**:
+  ```bash
+  evil-winrm -i <target-ip> -u <username> -p <password> -c "<command>"
+  ```
+
+---
+
+### exiftool
+- **View Metadata of a File**:
+  ```bash
+  exiftool <file>
+  ```
+
+- **Extract Specific Metadata Field**:
+  ```bash
+  exiftool -<field-name> <file>
+  ```
+
+---
+
+### ffuf
+- **Directory Bruteforce Scan**:
+  ```bash
+  ffuf -w <wordlist> -u http://<url>/FUZZ
+  ```
+
+- **Find Hidden DNS Subdomains**:
+  ```bash
+  ffuf -w <subdomain-wordlist> -u <domain>/FUZZ
+  ```
+
+---
+
+### find
+- **Search for Files by Name**:
+  ```bash
+  find /path/to/search -name "<file-name>"
+  ```
+
+- **Search Files by Permission**:
+  ```bash
+  find /path/to/search -perm <permission>
+  ```
+
+---
+
+### findstr
+- **Search for String in Files**:
+  ```bash
+  findstr "<string>" <file>
+  ```
+
+- **Search in Files Recursively**:
+  ```bash
+  findstr /s "<string>" <directory-path>\*.*
+  ```
+
+---
+
+### foremost
+- **Recover Deleted Files**:
+  ```bash
+  foremost -i <image-file> -o <output-dir>
+  ```
+
+- **Use Specific File Types for Recovery**:
+  ```bash
+  foremost -t <file-types> -i <image-file> -o <output-dir>
+  ```
+
+---
+
+### gcc
+- **Compile a C Program**:
+  ```bash
+  gcc -o <output-file> <source-file.c>
+  ```
+
+- **Compile with Debugging Symbols**:
+  ```bash
+  gcc -g -o <output-file> <source-file.c>
+  ```
+
+---
+
+### git
+- **Clone a Repository**:
+  ```bash
+  git clone <repository-url>
+  ```
+
+- **Check the Status of a Git Repository**:
+  ```bash
+  git status
+  ```
+
+
+
 ---
 
 ## Payloads
