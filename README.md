@@ -731,7 +731,12 @@ cd cheatsheet-pentesting
   ```bash
   crowbar ssh -b <ip-address> -u <username> -p <password-list>
   ```
-
+- **Brute Force RDP Login**:
+  ```bash
+  crowbar -b RDP -S <ip-address> -u <username> -C <password-list> -n 1
+  crowbar -b rdp -s 10.11.0.22/32 -u admin -C ~/password-file.txt -n 1
+  ```
+  `-n 1`: Limits the attack to use 1 thread for the brute-force attempt (you can increase the number for faster attacks, but with caution).
 ---
 
 ### crunch
@@ -762,6 +767,15 @@ cd cheatsheet-pentesting
   ```bash
   curl -X POST -d "username=<username>&password=<password>" http://<url>
   ```
+- **Uploading a File Using curl with a Form Field**:
+  ```bash
+  curl -F myFile=@test.jpg http://192.168.208.183/exiftest.php
+  ```
+
+- **Using curl with a Proxy Server**:
+  ```bash
+  curl "http://127.0.0.1:8080/shell.php?cmd=whoami" --proxy 192.168.120.223:3128
+  ```
 
 ---
 
@@ -775,7 +789,15 @@ cd cheatsheet-pentesting
   ```bash
   cut -c <range> <file>
   ```
+- **Extracting the First Field of /etc/passwd Using cut**:
+  ```bash
+  cut -d ":" -f 1 /etc/passwd
+  ```
 
+- **Extracting the Second Field from a Comma-Separated String**:
+  ```bash
+  echo "I hack binaries,web apps,mobile apps and just about anything else" | cut -f 2 -d ","
+  ```
 ---
 
 ### debugfs
@@ -788,15 +810,21 @@ cd cheatsheet-pentesting
   ```bash
   debugfs -R 'cat <file-path>' <device>
   ```
-
+- **Using debugfs to Read Files on a Partition**:
+  ```bash
+  debugfs /dev/sda5
+  debugfs:  cd /root/.ssh
+  debugfs:  cat id_rsa
+  ```
 ---
 
 ### diff
 - **Compare Two Files**:
   ```bash
   diff <file1> <file2>
+  diff -c <file1> <file2>
   ```
-
+  Vimdiff can also be used to compare files: vimdiff <file1> <file2>
 - **Show Side-by-Side Difference**:
   ```bash
   diff -y <file1> <file2>
@@ -814,6 +842,20 @@ cd cheatsheet-pentesting
   ```bash
   dig <domain> <record-type>
   ```
+- **Using dig to Query MX (Mail Exchange) Records for a Domain**:
+  ```bash
+  dig -t mx kali.org
+  ```
+
+- **Using dig with a Specific DNS Server to Query a Domain**:
+  ```bash
+  dig @8.8.8.8 kali.org
+  ```
+- **Performing a Zone Transfer (AXFR) with dig**:
+  ```bash
+  dig axfr @<DNS_server> kali.org
+  dig axfr @ns1.example.com example.com
+  ```
 
 ---
 
@@ -826,6 +868,18 @@ cd cheatsheet-pentesting
 - **List All Files with Details**:
   ```bash
   dir /s <directory-path>
+  ```
+- **Using dir to Locate Specific Files by Name (Recursive Search)**:
+  ```bash
+  dir /s trojan.txt
+  ```
+- **Using dir to Locate All .exe Files with Pagination**:
+  ```bash
+  dir /s *.exe /p
+  ```
+- **Using dir to View Alternate Data Streams (ADS)**:
+  ```bash
+  dir /r
   ```
 
 ---
@@ -840,6 +894,10 @@ cd cheatsheet-pentesting
   ```bash
   dirb http://<url> <wordlist> -p <proxy>
   ```
+- ** Using dirb to Perform a Non-Recursive Scan with a Delay Between Requests**:
+  ```bash
+  dirb http://www.megacorpone.com -r -z 10
+  ```
 
 ---
 
@@ -853,7 +911,15 @@ cd cheatsheet-pentesting
   ```bash
   dnsrecon -r <ip-range>
   ```
+- **Using dnsrecon to Perform a Zone Transfer (AXFR)**:
+  ```bash
+  dnsrecon -d megacorpone.com -t axfr
+  ```
 
+- **Brute Forcing Hostnames Using dnsrecon**:
+  ```bash
+  dnsrecon -d megacorpone.com -D ~/list.txt -t brt
+  ```
 ---
 
 ### docker
