@@ -2091,7 +2091,6 @@ cd cheatsheet-pentesting
   psexec \\<host> -u <username> -p <password> <command>
   psexec \\192.168.50.80 -u tester -p password ipconfig
   ```
-
 - **Run Interactive Shell**:
   ```cmd
   psexec \\<host>
@@ -2118,11 +2117,6 @@ cd cheatsheet-pentesting
   ```cmd
   python3 /usr/share/doc/python3-impacket/examples/psexec.py pc.domain/tester:password@192.168.120.116
   /usr/share/doc/python3-impacket/examples/psexec.py admin@10.129.254.45
-  ```
-
-- **Run Interactive Shell**:
-  ```cmd
-  psexec \\<host>
   ```
 
 ### PTH-Winexe
